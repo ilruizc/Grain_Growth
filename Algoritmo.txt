@@ -1,0 +1,101 @@
+2 Arreglos: uno tiempo actual y el otro un paso de tiempo siguiente
+1 Clase: Privada- 2 arreglos (N_1xN_1)
+Pública-Funciones
+Funciones: Función de llenado 1
+	Llena con valores aleatorios con igual probabilidad entre 0 y 1000 todos los lugares del arreglo y condición de frontera periodica
+    Función de regla de evolución (Vecinos de Von Neumann)
+	Si 3 de las 4 celdas contiguas tienen el mismo estado, la del centro también lo tendrá: 
+Extraer los valores de orientación de los vecinos en un arreglo considerando casos extremos, y sin considerar últimas fila y columna
+Evaluar 3 posiciones del arreglo:
+-En el caso de que sean todas diferentes, descartar el cambio. 
+-Si al menos 2 son iguales, evaluar el cuarto vecino y decidir el cambio
+	Si se da cambio en la primera columna o primera fila, cambiar también la última columna y la última fila. (condiciones de frontera periódicas)
+	Recorre el arreglo h_old, evolucionando, y sin importar el resultado, lo almacena en h_new
+	Finalmente, h_old = h_new 
+Función de impresión del arreglo
+[#include <fstream>]
+void LatticeBoltzmann::Imprimase(const char * NombreArchivo){
+  ofstream MiArchivo(NombreArchivo);
+  for(int ix=0;ix<Lx;ix+=4){
+    for(int iy=0;iy<Ly;iy+=4){
+      MiArchivo<<ix<<" "<<iy<<" "<<Ux0/Uventilador*4 << " "<< Uy0/Uventilador*4 <<endl;
+    }
+    MiArchivo<<endl;
+  }
+  MiArchivo.close();
+}
+
+Nombreclase.Imprimase("Agua-final.dat");
+
+Función que cuente el número de celdas de cada grano
+Arreglo de 1000 posiciones que almacena en cada una, el número de celdas con dicha orientación  
+Función de métricas
+	área de los granos
+	área máxima de grano
+Función circulito
+	Inicializa el arreglo (rellenar el centro)
+Main:
+	Definir constantes globales:
+	Tamaño del arreglo (N_1)
+	Tiempo máximo
+	Número de estados (Q)
+	Crear la clase
+	Inicializar los arreglos: Función de llenado y función circulito
+	Bucle de evolución temporal
+	Función de evolución 
+	Condicional de tiempo para impresión 
+Imprimir microestructura en T= {200,1000,4000}
+                                           Distribución de tamaño normalizado en T = 200
+                                           Diámetro promedio de grano en 12 pasos de T = n*10000/20
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2 Arreglos: uno tiempo actual y el otro un paso de tiempo siguiente
+1 Clase: Privada – 2 arreglos (NxN)
+- Arreglo de booleanos (N*N)
+- Arreglo de enteros, estados de vecinos (24) 
+Pública-Funciones
+Funciones: función de llenado 2
+              Función de cálculo de probabilidad
+	Función cálculo de E_B 
+                   
+	Función buscadora de frontera 
+		Guarda en un arreglo de booleanos, las posiciones que son frontera
+Función de regla de evolución (Segundos vecinos de Moore)
+	Energía de frontera para el paso temporal
+	Recorrer el arreglo de posiciones de frontera
+	En cada posición de frontera, encontrar la cantidad de orientaciones diferentes de sus vecinos
+	Cálculo de probabilidad de transición
+	Recorre el arreglo h_old, evolucionando, y sin importar el resultado, lo almacena en h_new
+	Finalmente, h_old = h_new 
+Función de impresión del arreglo
+Función que cuente el número de celdas de cada grano
+Función de métricas
+	área de los granos
+	área máxima de grano
+Main:
+	Definir constantes globales:
+	Tamaño del arreglo
+	Tiempo máximo
+	Crear la clase
+	Inicializar los arreglos: Función de llenado y función circulito
+	Bucle de evolución temporal
+	Función de evolución 
+	Condicional de tiempo para impresión 
+Imprimir microestructura en T= {200,1000,4000}
+                                           Distribución de tamaño normalizado en T = 200
+                                           Diámetro promedio de grano en 12 pasos de T = n*10000/20
+
+

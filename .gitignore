@@ -1,0 +1,4 @@
+*.out
+*~
+.#Paper1.cpp
+*.dat
