@@ -2,13 +2,16 @@
 1 Clase: Privada- 2 arreglos (N_1xN_1)
 Pública-Funciones
 Funciones: Función de llenado 1
-	Llena con valores aleatorios con igual probabilidad entre 0 y 1000 todos los lugares del arreglo y condición de frontera periodica
+	Llena con valores aleatorios con igual probabilidad entre 1 y 1000 unos pocos lugares siguiendo una distribución de bernouli con P=0.05. Del arreglo y condición de frontera periodica.
+	Busca cada posición diferente de 0 y llena los vecinos de moore con estado 0, con el mismo estado, siguiendo una distribución de llenado de bernoulli con P=0.8. 
+	Busca las posiciones que no se llenaron, y las llena con valores aleatorios entre 1 y Q
     Función de regla de evolución (Vecinos de Von Neumann)
 	Si 3 de las 4 celdas contiguas tienen el mismo estado, la del centro también lo tendrá: 
-Extraer los valores de orientación de los vecinos en un arreglo considerando casos extremos, y sin considerar últimas fila y columna
-Evaluar 3 posiciones del arreglo:
--En el caso de que sean todas diferentes, descartar el cambio. 
--Si al menos 2 son iguales, evaluar el cuarto vecino y decidir el cambio
+		Extraer los valores de orientación de los vecinos en un arreglo considerando casos extremos, y sin considerar últimas fila y columna
+		Evaluar 3 posiciones del arreglo:
+			-En el caso de que sean todas diferentes, descartar el cambio. 
+			-Si al menos 2 son iguales, evaluar el cuarto vecino y decidir el cambio
+		En caso contrario, obtener un numero aleatorio con igual probabilidad entre 0 y 1, y según el resultado, asignar a la celda, el estado del vecino correspondiente al valor de probabilidad	
 	Si se da cambio en la primera columna o primera fila, cambiar también la última columna y la última fila. (condiciones de frontera periódicas)
 	Recorre el arreglo h_old, evolucionando, y sin importar el resultado, lo almacena en h_new
 	Finalmente, h_old = h_new 
