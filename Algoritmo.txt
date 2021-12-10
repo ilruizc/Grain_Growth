@@ -61,28 +61,44 @@ Imprimir microestructura en T= {200,1000,4000}
 
 
 
-
-
-
-
-2 Arreglos: uno tiempo actual y el otro un paso de tiempo siguiente
+3 Arreglos: uno tiempo actual, el otro un paso de tiempo siguiente, y el tercero de calculos
 1 Clase: Privada – 2 arreglos (NxN)
 - Arreglo de booleanos (N*N)
 - Arreglo de enteros, estados de vecinos (24) 
+- Arreglo de temperaturas
+- Arreglo de movilidades
+- Arreglo de Deltas de Energía
+- Vecto de Delta E_B
 Pública-Funciones
-Funciones: función de llenado 2
-              Función de cálculo de probabilidad
-	Función cálculo de E_B 
-                   
-	Función buscadora de frontera 
-		Guarda en un arreglo de booleanos, las posiciones que son frontera
-Función de regla de evolución (Segundos vecinos de Moore)
-	Energía de frontera para el paso temporal
-	Recorrer el arreglo de posiciones de frontera
-	En cada posición de frontera, encontrar la cantidad de orientaciones diferentes de sus vecinos
-	Cálculo de probabilidad de transición
-	Recorre el arreglo h_old, evolucionando, y sin importar el resultado, lo almacena en h_new
-	Finalmente, h_old = h_new 
+Funciones: -función de llenado 2
+           -Función de cálculo de probabilidad
+	   -Función buscadora de frontera 
+		Criterio de frontera: Primeros vecinos de moore con estado diferente al propio
+	   -Función define y guarda vecinos
+		Define correctamente y guarda los vecinos en el arreglo de vecinos
+	   -Función cálculo de E_B (recibe el arreglo de vecinos)
+                3 bucles, 2 para recorrer h_old y 1 para recorrer el arreglo de vecinos
+	   -Función calculo Delta E
+		Recorre el arreglo y obtiene Delta E_B
+ 		genera el numero aleatorio y calcula Delta E_T
+		Calcula Delta E y almacena el valor en el arreglo de Deltas de energía
+	   -Función de regla de evolución (Segundos vecinos de Moore)
+		h_aux=h_old
+		Recorre todo el arreglo h_aux. Para cada posición:
+			Llama la función buscadora de frontera y revisa si es frontera
+			LLama la función define y guarda vecinos
+			Para todos los vecinos:
+				Llama la función cálculo de E_B Y almacena el valor en una variable EB_i
+				Asigna el valor del primer vecino
+				Llama la función de calculo de E_B y almacena el valor en otra variable EB_f
+				Calcula Delta E_B y almacena el valor en el vector de Delta E_B
+				Escoge el minimo de los valores del vector de Delta E_B
+				Almacena el estado correspondiente al mínimo de Delta E_B en h_new
+			Llama la función calculo de Delta E
+		Escoge el valor minimo de Delta E, y pasa por cada posición del arreglo de Delta E, llamando la función de calculo de probabilidad
+			si la probabilidad es 1 => h_new[i][j] se mantiene igual
+			Si la probabilidad es 0 => h_new[i][j] = h_old[i][j]
+		h_old[i][j] = h_new[i][j]
 Función de impresión del arreglo
 Función que cuente el número de celdas de cada grano
 Función de métricas
