@@ -261,9 +261,14 @@ int main (void){
   Material granos;
   granos.fill();
   granos.print_array("Arreglo1.dat");
-  for(int t =0 ; t<2000; t++){
+  for(int t =0 ; t<500; t++){
     granos.evolution(t);
     granos.array_change();
   }
   granos.print_array("Arreglo2.dat");
+   for(int t =0 ; t<500; t++){
+    granos.evolution(t);
+    granos.array_change();
+  }
+  granos.print_array("Arreglo3.dat");
 }
