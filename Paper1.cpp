@@ -53,8 +53,8 @@ void Material::fill (void){
 }
 void Material::fill_circle(void){
  
-  for(int i=N; i<N; i++){
-    for(int j=N; j<N; j++){
+  for(int i=0; i<N; i++){
+    for(int j=0; j<N; j++){
       h_old[i][j] = 1;
     }
   }

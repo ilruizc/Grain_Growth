@@ -1,5 +1,9 @@
-a.out: Paper1.cpp
-	g++ Paper1.cpp
-	./a.out	
+All: 1.x 2.x
+1: Paper1.cpp
+	g++ -o 1.x Paper1.cpp
+	./1.x
+2: Paper2.cpp
+	g++ -o 2.x Paper2.cpp
+	./2.x
 clean: 
-	rm ./a.out *~ *.dat
+	rm ./a.out *~ *.dat *.x
