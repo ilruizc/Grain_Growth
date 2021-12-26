@@ -4,10 +4,11 @@
 #include <random>
 #include <math.h>
 
-const short int N = 800; //Tamaño del arreglo
+const short int N = 20; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
-const short int Q = 1000; //Número de estados
-const short int r = 20; //Radio en celdas de la región caliente 
+const short int Q = 10; //Número de estados
+const short int r = 6; //Radio en celdas de la región caliente
+const float E_A = 2; // Energía de activación, como multiplo de la constante de Boltzmann 
 
 class Material
 {
@@ -22,6 +23,7 @@ private:
 public:
   void fill (void);
   void fill_tempt (float T_min, float T_max);
+  float probability (int i, int j, float M_max, float D_Emin);
   // void size_count (void);
   void print_array(const char * Arreglo);
   void print_gradient(const char * Arreglo);
@@ -30,10 +32,12 @@ public:
 
 void Material::fill (void){
   std::mt19937 gen(N);
+  std::mt19937 gen1(N+1);
   std::uniform_int_distribution<> rand(1, Q);
   for(int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       h_old[i][j] = 1;
+      Delta_E [i][j] = rand(gen)-rand(gen1);
     }
   }
   
@@ -73,7 +77,16 @@ void Material::fill_tempt(float T_min, float T_max){
        }
     }
   }
-  
+}
+
+float Material::probability (int i, int j, float M_max, float D_Emin){
+  float M_ij = exp ((-E_A)/tempt [i][j]);
+  if (Delta_E[i][j] < 0){
+  return ((M_ij/M_max)*(Delta_E[i][j]/D_Emin));
+  }
+  else {
+    return 0;
+  }
 }
 void Material::print_array(const char * Arreglo){
   std::ofstream MiArchivo(Arreglo);
@@ -96,11 +109,13 @@ void Material::print_gradient(const char * Arreglo)
 int main (void){
    Material granos;
    granos.fill_tempt(800.0,1000.0);
-   granos.print_array("800-1000.dat");
-   granos.print_gradient("gradiente1.dat");
-   granos.fill_tempt(500.0,1000.0);
-   granos.print_array("500-1000.dat");
-   granos.print_gradient("gradiente2.dat");
+   granos.fill();
+   for(int i = 0; i < N; i++){
+     for( int j = 0; j < N; j++){
+       std::cout<<granos.probability(i,j, 0.8, -2*Q)<<'\t';
+     }
+     std::cout<<std::endl;
+   }
    
   return 0;
   

@@ -73,7 +73,7 @@ Funciones:
 	  [✓] -Función de llenado 2
 	      	Llena h_old
 		Llena Temperature
-          [] -Función de cálculo de probabilidad
+          [✓] -Función de cálculo de probabilidad
 	  [] -Función buscadora de frontera 
 		Criterio de frontera: Primeros vecinos de moore con estado diferente al propio
 	  [] -Función define y guarda vecinos
