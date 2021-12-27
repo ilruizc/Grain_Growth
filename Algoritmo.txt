@@ -74,10 +74,10 @@ Funciones:
 	      	Llena h_old
 		Llena Temperature
           [✓] -Función de cálculo de probabilidad
-	  [] -Función buscadora de frontera 
-		Criterio de frontera: Primeros vecinos de moore con estado diferente al propio
 	  [] -Función define y guarda vecinos
 		Define correctamente y guarda los vecinos en el arreglo de vecinos
+	  [] -Función buscadora de frontera 
+		Criterio de frontera: Primeros vecinos de moore con estado diferente al propio
 	  [] -Función cálculo de E_B (recibe el arreglo de vecinos)
                 3 bucles, 2 para recorrer h_old y 1 para recorrer el arreglo de vecinos
 	  [] -Función calculo Delta E
