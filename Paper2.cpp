@@ -6,7 +6,7 @@
 
 const short int N = 20; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
-const short int Q = 5; //Número de estados
+const short int Q = 9; //Número de estados
 const short int r = 6; //Radio en celdas de la región caliente
 const float E_A = 2; // Energía de activación, como multiplo de la constante de Boltzmann 
 
@@ -39,7 +39,6 @@ void Material::fill (void){
   for(int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       h_old[i][j] = 1;
-      Delta_E [i][j] = rand(gen)-rand(gen1);
     }
   }
   
@@ -52,7 +51,7 @@ void Material::fill (void){
 	h_old[i][j] = h_old[i][0];
       }
       else {
-	  h_old[i][j]= rand(gen);
+	  h_old[i][j]= rand(gen1);
 	
       }
     }
@@ -97,7 +96,7 @@ void Material::neighbor_def (int i, int j){
     neighborhood[n_index] = 0;
   }
   // Frontera interior
-  if(i == 1 || i == (N-2)){
+  if((i == 1 || i == (N-2)) && (j>=1 && j<=(N-2))){
     int i_aux = 0;
     int j_aux = 0;
     for (int ii = i-1; ii <= i+1; ii++){
@@ -158,7 +157,7 @@ void Material::neighbor_def (int i, int j){
       }
     } 
   }
-  else if ((j==1||j==(N-2)) && (i != 1 || j != (N-2))){
+  else if ((j==1||j==(N-2)) && (i > 1 && i < (N-2))){
     if (j==1){
       for (int u = 0; u<5 ; u++){
 	neighborhood [(u*5)] = h_old[(i-2)+u][N-2];
@@ -180,30 +179,366 @@ void Material::neighbor_def (int i, int j){
   }
   //Frontera exterior
   else if (i == 0 || i == (N-1)){ 
-    if (i==0){
-      int i_aux = 0;
-      int j_aux = 0;
-      if(j==0){
-	for (int ii = ; ii <= i+1; ii++){
-	  for(int jj = j-1; jj <= j+1; jj++){
-	    neighborhood[6+(3*i_aux)+j_aux] = h_old[ii][jj];
+    if (i==0){//terminado
+      if(j==0){ //terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i; ii <= i+2; ii++){
+	  for(int jj = j; jj <= j+2; jj++){
+	    neighborhood[12+(3*i_aux)+j_aux] = h_old[ii][jj];
 	    j_aux++;
 	  }
 	  j_aux--;
 	  i_aux++;
 	}
+	for (int u = 0; u < 3; u++){
+	  neighborhood [7+u] = h_old [N-2][u];
+	  neighborhood [2+u] = h_old [N-3][u];
+	  neighborhood [(5*u)+11] = h_old [u][N-2];
+	  neighborhood [(5*u)+10] = h_old [u][N-3];
+	}
+	neighborhood [0] = h_old [N-3][N-3];
+	neighborhood [1] = h_old [N-3][N-2];
+	neighborhood [5] = h_old [N-2][N-3];
+	neighborhood [6] = h_old [N-2][N-2];
+      }
+      else if (j==1){ //terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i; ii <= i+2; ii++){
+	  for(int jj = j-1; jj <= j+2; jj++){
+	    neighborhood[11+(3*i_aux)+j_aux] = h_old[ii][jj];
+	    j_aux++;
+	  }
+	  j_aux-=2;
+	  i_aux++;
+	}
+	for(int u = 1; u < 5; u++){
+	  neighborhood [u] = h_old [N-3][u-1];
+	  neighborhood [5+u] = h_old [N-2][u-1];
+	  neighborhood [(5*u)+5] = h_old [u-1][N-2];
+	}
+	neighborhood [0] = h_old [N-3][N-2];
+	neighborhood [5] = h_old [N-2][N-2];
+      }
+      
+      else if (j==(N-1)){ //terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i; ii <= i+2; ii++){
+	  for(int jj = j-2; jj <= j; jj++){
+	    neighborhood[10+(3*i_aux)+j_aux] = h_old[ii][jj];
+	    j_aux++;
+	  }
+	  j_aux--;
+	  i_aux++;
+	}
+	for (int u = 0; u<3 ; u++){
+	  neighborhood [5+u] = h_old [N-2][(N-3)+u];
+	  neighborhood [u] = h_old [N-3][(N-3)+u];
+	  neighborhood [(5*u)+13] = h_old [u][1];
+	  neighborhood [(5*u)+14] = h_old [u][2];
+	}	
+	neighborhood [3] = h_old [N-3][1];
+	neighborhood [4] = h_old [N-3][2];
+	neighborhood [8] = h_old [N-2][1];
+	neighborhood [9] = h_old [N-2][2];
+      }
+      else if (j == (N-2)){ //terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i; ii <= i+2; ii++){
+	  for(int jj = j-2; jj <= j+1; jj++){
+	    neighborhood[10+(3*i_aux)+j_aux] = h_old[ii][jj];
+	    j_aux++;
+	  }
+	  j_aux-=2;
+	  i_aux++;
+	}
+	for (int u = 0 ; u<4 ; u++){
+	  neighborhood [u] = h_old [N-3][(N-4)+u];
+	  neighborhood [5+u] = h_old [N-2][(N-4)+u];
+	  neighborhood [(5*u)+14] = h_old [u][1];
+	}
+	neighborhood [4] = h_old [N-3][1];
+	neighborhood [9] = h_old [N-2][1];
+      }
+      
+      else {// terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i; ii <= i+2; ii++){
+	  for(int jj = j-2; jj <= j+2; jj++){
+	    neighborhood[10+(3*i_aux)+j_aux] = h_old[ii][jj];
+	    j_aux++;
+	  }
+	  j_aux-=3;
+	  i_aux++;
+	}
+        i_aux = 0;
+	j_aux = 0;
+	for (int ii = 0; ii < 2; ii++){
+	  for(int jj = j-2; jj <= j+2; jj++){
+	    neighborhood[(3*i_aux)+j_aux] = h_old[N-3+ii][jj];
+	    j_aux++;
+	  }
+	  j_aux-=3;
+	  i_aux++;
+	}
+      }
+    }
+    
+    else if (i == (N-1)){
+      if (j==0){ // terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i-2; ii <= i; ii++){
+	  for(int jj = j; jj <= j+2; jj++){
+	    neighborhood[2+(3*i_aux)+j_aux] = h_old[ii][jj];
+	    j_aux++;
+	  }
+	  j_aux--;
+	  i_aux++;
+	}
+	for (int u = 0; u<3 ; u++){
+	  neighborhood [5*u] = h_old [(N-3)+u][N-3];
+	  neighborhood [(5*u)+1] = h_old [(N-3)+u][N-2];
+	  neighborhood [17+u] = h_old [1][u];
+	  neighborhood [22+u] = h_old [2][u];
+	}
+	neighborhood [15] = h_old [1][N-3];
+	neighborhood [16] = h_old [1][N-2];
+	neighborhood [20] = h_old [2][N-3];
+	neighborhood [21] = h_old [2][N-2];
+      }
+      else if (j==1){//terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i-2; ii <= i; ii++){
+	  for(int jj = j-1; jj <= j+2; jj++){
+	    neighborhood[1+(3*i_aux)+j_aux] = h_old[ii][jj];
+	    j_aux++;
+	  }
+	  j_aux-=2;
+	  i_aux++;
+	}
+	for (int u =0; u < 4; u++){
+	  neighborhood [16+u] = h_old [1][u];
+	  neighborhood [21+u] = h_old [2][u];
+	}
+	for (int u = 0; u<3 ; u++){
+	  neighborhood [5*u] = h_old [(N-3)+u][N-2];
+	}
+	neighborhood [15] = h_old [1][N-2];
+	neighborhood [20] = h_old [2][N-2];
+      }
+      else if (j==N-1){//terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i-2; ii <= i; ii++){
+	  for(int jj = j-2; jj <= j; jj++){
+	    neighborhood[(3*i_aux)+j_aux] = h_old[ii][jj];
+	    j_aux++;
+	  }
+	  j_aux--;
+	  i_aux++;
+	}
+	for (int u = 0; u < 3; u++){
+	  neighborhood [15+u] = h_old [1][(N-3)+u];
+	  neighborhood [20+u] = h_old [2][(N-3)+u];
+	  neighborhood [(5*u)+3] = h_old [(N-3)+u][1];
+	  neighborhood [(5*u)+4] = h_old [(N-3)+u][2];
+	}
+	neighborhood [18] = h_old [1][1];
+	neighborhood [19] = h_old [1][2];
+	neighborhood [23] = h_old [2][1];
+	neighborhood [24] = h_old [2][2];
+      }
+      else if (j == N-2){//terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i-2; ii <= i; ii++){
+	  for(int jj = j-2; jj <= j+1; jj++){
+	    neighborhood[(3*i_aux)+j_aux] = h_old[ii][jj];
+	    j_aux++;
+	  }
+	  j_aux-=2;
+	  i_aux++;
+	}
+	for (int u =0; u < 4; u++){
+	  neighborhood [15+u] = h_old [1][(N-4)+u];
+	  neighborhood [20+u] = h_old [2][(N-4)+u];
+	}
+	for (int u = 0; u<3 ; u++){
+	  neighborhood [(5*u)+4] = h_old [(N-3)+u][1];
+	}
+	neighborhood [19] = h_old [1][1];
+	neighborhood [24] = h_old [2][1];
+      }
+      else { // terminado
+	int i_aux = 0;
+	int j_aux = 0;
+	for (int ii = i-2; ii <= i; ii++){
+	  for(int jj = j-2; jj <= j+2; jj++){
+	    neighborhood[(3*i_aux)+j_aux] = h_old[ii][jj];
+	    j_aux++;
+	  }
+	  j_aux-=3;
+	  i_aux++;
+	}
+        i_aux = 0;
+	j_aux = 0;
+	for (int ii = 0; ii < 2; ii++){
+	  for(int jj = j-2; jj <= j+2; jj++){
+	    neighborhood[15+(3*i_aux)+j_aux] = h_old[1+ii][jj];
+	    j_aux++;
+	  }
+	  j_aux-=3;
+	  i_aux++;
+	}
       }
     }
   }
-  else{
-    for(int ii = i-2; ii <= i+2; ii++){
-      for(int jj = j-2; jj <= j+2; jj++){
-	neighborhood[n_index] = h_old[ii][jj];
-	n_index++;
+   else  if ((i == 1 || i == N-2) && (j == 0 || j == N-1)){
+     if ( i == 1 && j==0){ //terminado
+      int i_aux = 0;
+      int j_aux = 0;
+      for (int ii = i-1; ii <= i+2; ii++){
+	for(int jj = j; jj <= j+2; jj++){
+	  neighborhood[7+(4*i_aux)+j_aux] = h_old[ii][jj];
+	  j_aux++;
+	}
+	j_aux-=2;
+	i_aux++;
       }
-    }
-  }
-  
+      for (int u = 0; u<4 ; u++){
+	neighborhood [(5*u)+5] = h_old [u][N-3];
+	neighborhood [(5*u)+6] = h_old [u][N-2];
+      }
+      for(int u = 0; u<3 ; u++){
+	neighborhood [2+u] = h_old [N-2][u];
+      }
+      neighborhood [0] = h_old [N-2][N-3];
+      neighborhood [1] = h_old [N-2][N-2];
+     }
+     else if (i==1 && j==N-1){//terminado
+       int i_aux = 0;
+       int j_aux = 0;
+       for (int ii = i-1; ii <= i+2; ii++){
+	 for(int jj = j-2; jj <= j; jj++){
+	   neighborhood[5+(4*i_aux)+j_aux] = h_old[ii][jj];
+	   j_aux++;
+	 }
+	 j_aux-=2;
+	i_aux++;
+       }
+       for (int u = 0; u<4 ; u++){
+	 neighborhood [(5*u)+8] = h_old [u][1];
+	 neighborhood [(5*u)+9] = h_old [u][2];
+       }
+       for(int u = 0; u<3 ; u++){
+	 neighborhood [u] = h_old [N-2][(N-3)+u];
+       }
+       neighborhood [3] = h_old [N-2][1];
+       neighborhood [4] = h_old [N-2][2];
+     }
+     else if (i==(N-2) && j == 0){//terminado
+       int i_aux = 0;
+       int j_aux = 0;
+       for (int ii = i-2; ii <= i+1; ii++){
+	 for(int jj = j; jj <= j+2; jj++){
+	   neighborhood[2+(4*i_aux)+j_aux] = h_old[ii][jj];
+	   j_aux++;
+	 }
+	 j_aux-=2;
+	 i_aux++;
+       }
+       for (int u = 0; u<4 ; u++){
+	 neighborhood [(5*u)] = h_old [(N-4)+u][N-3];
+	 neighborhood [(5*u)+1] = h_old [(N-4)+u][N-2];
+       }
+        for(int u = 0; u<3 ; u++){
+	 neighborhood [22+u] = h_old [1][u];
+       }
+       neighborhood [20] = h_old [1][N-3];
+       neighborhood [21] = h_old [1][N-2];
+     }
+     else if (i == (N-2) && j== (N-1)){//terminado
+       int i_aux = 0;
+       int j_aux = 0;
+       for (int ii = i-2; ii <= i+1; ii++){
+	 for(int jj = j-2; jj <= j; jj++){
+	   neighborhood[(4*i_aux)+j_aux] = h_old[ii][jj];
+	   j_aux++;
+	 }
+	 j_aux-=2;
+	 i_aux++;
+       }
+       for (int u = 0; u<4 ; u++){
+	 neighborhood [(5*u)+3] = h_old [(N-4)+u][1];
+	 neighborhood [(5*u)+4] = h_old [(N-4)+u][2];
+       }
+       for(int u = 0; u<3 ; u++){
+	 neighborhood [20+u] = h_old [1][(N-3)+u];
+       }
+       neighborhood [23] = h_old [1][1];
+       neighborhood [24] = h_old [1][2];
+     }
+   }
+   else if ((j==0 || j==(N-1)) && (i>1 && i <N-2)){
+     if (j == 0) {//terminado
+       int i_aux = 0;
+       int j_aux = 0;
+        for (int ii = i-2; ii <= i+2; ii++){
+	 for(int jj = j; jj <= j+2; jj++){
+	   neighborhood[2+(5*i_aux)+j_aux] = h_old[ii][jj];
+	   j_aux++;
+	 }
+	 j_aux-=3;
+	 i_aux++;
+       }
+       i_aux = 0;
+       j_aux = 0;
+       for (int ii = i-2; ii <= i+2; ii++){
+	 for(int jj = 0; jj < 2; jj++){
+	   neighborhood[(5*i_aux)+j_aux] = h_old[ii][N-3+jj];
+	    j_aux++;
+	 }
+	 j_aux-=2;
+	 i_aux++;
+       }
+     }
+     else if (j == (N-1)){//terminado
+       int i_aux = 0;
+       int j_aux = 0;
+       for (int ii = i-2; ii <= i+2; ii++){
+	 for(int jj = j-2; jj <= j; jj++){
+	   neighborhood[(5*i_aux)+j_aux] = h_old[ii][jj];
+	   j_aux++;
+	 }
+	 j_aux-=3;
+	 i_aux++;
+       }
+       i_aux = 0;
+       j_aux = 0;
+       for (int ii = i-2; ii <= i+2; ii++){
+	 for(int jj = 0; jj < 2; jj++){
+	   neighborhood[3+(5*i_aux)+j_aux] = h_old[ii][1+jj];
+	    j_aux++;
+	 }
+	 j_aux-=2;
+	 i_aux++;
+       }
+     }
+   }
+   else{
+     for(int ii = i-2; ii <= i+2; ii++){
+       for(int jj = j-2; jj <= j+2; jj++){
+	 neighborhood[n_index] = h_old[ii][jj];
+	 n_index++;
+       }
+     }
+   }
 }
 
 int Material::neighbor_get (int ii){
@@ -233,7 +568,7 @@ int main (void){
    granos.fill_tempt(800.0,1000.0);
    granos.fill();
    granos.print_array("Arreglo1.txt");
-   granos.neighbor_def(N/2,N-2);
+   granos.neighbor_def(N/2,N-1);
    int neighbor [25];
    for (int ii = 0; ii<25 ; ii++){
      neighbor[ii] = granos.neighbor_get (ii);
