@@ -5,12 +5,223 @@
 #include <math.h>
 #include <time.h>
 
-const short int N = 60; //Tamaño del arreglo
+const short int N = 80; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
 const short int Q = 20; //Número de estados
 const short int r = 20; //Radio en celdas de la región caliente
 const float E_A = 2; // Energía de activación, como multiplo de la constante de Boltzmann
 const float R = 8.31446261; // Constante del Gas ideal
+
+/*------------------Clase Paper1-------------------*/
+
+class Material1
+{
+private:
+  int h_old[N][N];
+  int h_new[N][N];
+  int areas[Q];
+
+public:
+  void fill (void);
+  void fill_circle(void);
+  void evolution(int t);
+  void evolution_aux (int a, int b, int c, int d, int i, int j, int prob);
+  void array_change(void);
+  void print_array(const char * Arreglo);
+  int h_old_get(int i, int j);
+};
+  
+void Material1::fill (void){
+  std::mt19937 gen(N);
+  std::binomial_distribution <> d(1, 1);
+  std::uniform_int_distribution<> rand(1, Q);
+  for(int i=0; i<N; i++){
+    for(int j=0; j<N; j++){
+      h_old[i][j] = 1;
+    }
+  }
+  
+  for(int i=0; i<N; i++){
+    for(int j=0; j<N; j++){
+      if (i == (N-1)){
+	h_old[i][j] = h_old[0][j];
+      }
+      else if (j == (N-1)){
+	h_old[i][j] = h_old[i][0];
+      }
+      else {
+	if(d(gen) == 1){
+	  h_old[i][j]= rand(gen);
+	}
+      }
+    }
+  }
+}
+void Material1::evolution_aux (int a, int b, int c, int d, int i, int j, int prob){
+ 
+  // a=(i,j-1) ; b = (i-1,j) ; c = (i,j+1) ; d = (i+1,j)
+  if (a==b && b==c && c==d){
+    h_new[i][j]=h_old[i][j];
+  }
+
+  else{
+    if((a == b) && (b == c)){//Prueba si a,b,c son iguales
+      if(i==0){
+	h_new[i][j] = a;
+	h_new[N-1][j] = a;
+    }
+      else if(j==0){
+	h_new[i][j] = a;
+	h_new[i][j] = a;
+      }
+      else{
+	h_new[i][j] = a;
+      }
+      
+    }
+    
+    else  if((b == c) && (c == d)){//Prueba si b,c,d son iguales
+      if(i==0){
+	h_new[i][j] = b;
+	h_new[N-1][j] = b;
+      }
+      else if(j==0){
+	h_new[i][j] = b;
+	h_new[i][j] = b;
+    }
+      else{
+	h_new[i][j] = b;
+      }
+      
+    }
+    
+    else if((c == d) && (d == a)){//Prueba si c,d,a son iguales
+      if(i==0){
+	h_new[i][j] = c;
+	h_new[N-1][j] = c;
+      }
+      else if(j==0){
+	h_new[i][j] = c;
+	h_new[i][N-1] = c;
+      }
+      else{
+	h_new[i][j] = c;
+      }
+      
+    }
+    else if((d == a) && (a == b)){//Prueba si d,a,b son iguales
+      if(i==0){
+	h_new[i][j] = d;
+	h_new[N-1][j] = d;
+      }
+      else if(j==0){
+	h_new[i][j] = d;
+	h_new[i][N-1] = d;
+      }
+      else{
+	h_new[i][j] = d;
+      }
+      
+    }
+    else {
+      //std::cout<<prob<<std::endl;
+      if(1<=prob && prob<=25){
+	h_new[i][j] = a;
+      }
+      else if (25<prob && prob<=50){
+	h_new[i][j] = b;
+      }
+      else if (50<prob && prob<=75){
+	h_new[i][j] = c;
+      }
+      else if (75<prob && prob<=100) {
+	h_new[i][j] = d;
+      }
+      else{
+	h_new[i][j] = h_old[i][j];
+      }
+    }
+  }
+}
+void Material1::evolution(int t){
+  int a,b,c,d; //variables auxiliares: a=(i,j-1) ; b = (i-1,j) ; c = (i,j+1) ; d = (i+1,j)
+ std::mt19937 gen(t);
+  std::uniform_int_distribution<> rand(1, 100);
+  for(int i=0; i<(N-1); i++){
+    for(int j=0; j<(N-1); j++){
+      if (i == 0){
+	if (j== 0){
+	  a = h_old[i][N-2];
+	}
+	else{
+	  a = h_old[i][j-1];
+	}
+	b = h_old[N-2][j];
+	c = h_old[i][j+1];
+	d = h_old[i+1][j];
+	evolution_aux (a, b, c,  d,  i, j, rand(gen));
+      }
+      else if (j == 0){
+	a = h_old[i][N-2];
+	b = h_old[i-1][j];
+	c = h_old[i][j+1];
+	d = h_old[i+1][j];
+	evolution_aux (a, b, c,  d,  i, j, rand(gen));
+      }
+      else {
+	a = h_old[i][j-1];
+	b = h_old[i-1][j];
+	c = h_old[i][j+1];
+	d = h_old[i+1][j];
+	evolution_aux (a, b, c,  d,  i, j, rand(gen));
+      }
+    }
+  } 
+}
+void Material1::array_change(void){
+ for(int i=0; i<(N-1); i++){
+    for(int j=0; j<(N-1); j++){
+      if (i==0){
+	if(j==0){
+	  h_old[i][j] = h_new[i][j];
+	h_old[N-1][j] = h_new[i][j];
+	h_old[i][N-1] = h_new[i][j];
+	}
+	else{
+	  h_old[i][j] = h_new[i][j];
+	  h_old[N-1][j] = h_new[i][j];
+	}
+      }
+      else if(j==0 && i!=0){
+	h_old[i][j] = h_new[i][j];
+	h_old[i][N-1] = h_new[i][j];
+      }
+      else{
+	h_old[i][j] = h_new[i][j];
+      }
+    }
+ }
+ h_old[N-1][N-1] = h_old[0][0];
+}
+
+void Material1::print_array(const char * Arreglo){
+  std::ofstream MiArchivo(Arreglo);
+  for(int i=0;i<N;i++){
+    for(int j=0;j<N;j++){
+      MiArchivo<<h_old[i][j]<<"  ";
+    }
+    MiArchivo<<std::endl;
+  }
+  MiArchivo.close();
+}
+
+int Material1::h_old_get(int i, int j){
+  return h_old[i][j];
+}
+  
+
+/*------------------Clase Paper2-------------------*/
+
 
 class Material
 {
@@ -34,6 +245,7 @@ public:
   long int Boundary_energy (void);
   void Delta_E_min (int i, int j);
   void evolve (void);
+  void h_old_set(int i, int j, int v);
   // void size_count (void);
   void print_array(const char * Arreglo);
   void print_gradient(const char * Arreglo);
@@ -729,6 +941,9 @@ void Material::evolve (void){
 int Material::neighbor_get (int ii){
   return neighborhood[ii];
 }
+void Material::h_old_set(int i, int j, int v){
+  h_old[i][j] = v;
+}
 
 void Material::print_array(const char * Arreglo){
   std::ofstream MiArchivo(Arreglo);
@@ -748,12 +963,26 @@ void Material::print_gradient(const char * Arreglo)
   }
   MiArchivo.close();
 }
+
+/*------------------Main-------------------*/
 int main (void){
+  Material1 initial_sys;
+  initial_sys.fill();
+  for(int t =0 ; t<30; t++){
+    initial_sys.evolution(t);
+    initial_sys.array_change();
+  }
+  initial_sys.print_array("Inicial.dat");
   Material granos;
+  for (int i = 0; i<N ; i++){
+    for (int j = 0; j<N; j++){
+      granos.h_old_set(i,j,initial_sys.h_old_get(i,j));
+    }
+  }
   granos.fill_tempt(1000.0,1000.0);
-  granos.fill();
+  //granos.fill();
   granos.print_array("Arreglo1.dat");
-   for (int t = 0; t <1; t++){
+  for (int t = 0; t <10; t++){
     granos.evolve();
     std::cout<<t<<std::endl;
   }
