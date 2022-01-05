@@ -4,6 +4,6 @@ All: 1.x 2.x
 	./1.x
 2: Paper2.cpp
 	g++  -g -fsanitize=address -o 2.x Paper2.cpp
-	./2.x
+	time ./2.x
 clean: 
 	rm ./a.out *~ *.dat *.x

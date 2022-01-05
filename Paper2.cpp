@@ -5,10 +5,10 @@
 #include <math.h>
 #include <time.h>
 
-const short int N = 200; //Tamaño del arreglo
+const short int N = 60; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
-const short int Q = 100; //Número de estados
-const short int r = 5; //Radio en celdas de la región caliente
+const short int Q = 20; //Número de estados
+const short int r = 20; //Radio en celdas de la región caliente
 const float E_A = 2; // Energía de activación, como multiplo de la constante de Boltzmann
 const float R = 8.31446261; // Constante del Gas ideal
 
@@ -22,10 +22,11 @@ private:
   short int neighborhood [25]; //Numero de segundos vecinos de Moore
   float tempt [N][N];
   int areas[Q];
-
+  bool frontier [N][N];
 public:
   void fill (void);
   void fill_tempt (float T_min, float T_max);
+  void fill_circle(void);
   float probability (int i, int j, float M_max, float D_Emin);
   void neighbor_def (int i, int j);
   int neighbor_get (int ii);
@@ -39,6 +40,22 @@ public:
   // int getArea (int a);
 };
 
+void Material::fill_circle(void){
+ 
+  for(int i=0; i<N; i++){
+    for(int j=0; j<N; j++){
+      h_old[i][j] = 1;
+    }
+  }
+  for(int i=0; i<N; i++){
+    for(int j=0; j<N; j++){
+      if(((i-(N/2))*(i-(N/2)))+((j-(N/2))*(j-(N/2)))<r*r){
+	h_old[i][j] = 2;
+      }
+    }
+  }
+  
+}
 void Material::fill (void){
   std::mt19937 gen(N);
   std::mt19937 gen1(N+1);
@@ -64,6 +81,7 @@ void Material::fill (void){
     }
   }
 }
+
 void Material::fill_tempt(float T_min, float T_max){
   float a = r*(T_max-T_min);
   float b = T_min;
@@ -559,6 +577,7 @@ bool Material::is_boundary (int i, int j){
     for (int jj = 0; jj<3; jj++){
       test = neighborhood [6+(3*i_aux)+j_aux];
       if (test != actual){
+	frontier [i][j] = true;
 	return true;
       }
       j_aux++;
@@ -566,6 +585,7 @@ bool Material::is_boundary (int i, int j){
     j_aux--;
     i_aux++; 
   }
+  frontier [i][j] = false;
   return false;
 }
 
@@ -678,16 +698,18 @@ void Material::evolve (void){
   for (int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       if (Delta_E [i][j] != 0){
-	std::bernoulli_distribution prob(/*probability (i, j, M_max, D_Emin)*/1);
+	std::bernoulli_distribution prob(probability (i, j, M_max, D_Emin));
 	//std::cout<<probability (i, j, M_max, D_Emin)<<std::endl;
 	if (prob(gen) == false){
 	  //std::cout<<"aqui"<<std::endl;
 	  h_new[i][j] = h_old [i][j];
 	}
       }
+      else {
+	h_new[i][j] = h_old[i][j];
+      }
     }
   }
-
   for (int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       if (j == N-1){
@@ -727,13 +749,13 @@ void Material::print_gradient(const char * Arreglo)
   MiArchivo.close();
 }
 int main (void){
-  int a = 0;
   Material granos;
   granos.fill_tempt(1000.0,1000.0);
   granos.fill();
   granos.print_array("Arreglo1.dat");
-  for (int t = 0; t <2; t++){
+   for (int t = 0; t <1; t++){
     granos.evolve();
+    std::cout<<t<<std::endl;
   }
   granos.print_array("Arreglo2.dat");
   

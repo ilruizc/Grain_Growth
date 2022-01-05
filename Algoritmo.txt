@@ -74,17 +74,17 @@ Funciones:
 	      	Llena h_old
 		Llena Temperature
           [✓] -Función de cálculo de probabilidad
-	  [] -Función buscadora de frontera 
+	  [✓] -Función buscadora de frontera 
 		Criterio de frontera: Primeros vecinos de moore con estado diferente al propio
 	  [✓] -Función define y guarda vecinos
 		Define correctamente y guarda los vecinos en el arreglo de vecinos
-	  [] -Función cálculo de E_B (recibe el arreglo de vecinos)
+	  [✓] -Función cálculo de E_B (recibe el arreglo de vecinos)
                 3 bucles, 2 para recorrer h_old y 1 para recorrer el arreglo de vecinos
-	  [] -Función calculo Delta E
+	  [✓] -Función calculo Delta E
 		Recorre el arreglo y obtiene Delta E_B
  		genera el numero aleatorio y calcula Delta E_T
 		Calcula Delta E y almacena el valor en el arreglo de Deltas de energía
-	  [] -Función de regla de evolución (Segundos vecinos de Moore)
+	  [✓] -Función de regla de evolución (Segundos vecinos de Moore)
 		h_aux=h_old
 		Recorre todo el arreglo h_aux. Para cada posición:
 			Llama la función buscadora de frontera y revisa si es frontera
@@ -101,7 +101,7 @@ Funciones:
 			si la probabilidad es 1 => h_new[i][j] se mantiene igual
 			Si la probabilidad es 0 => h_new[i][j] = h_old[i][j]
 		h_old[i][j] = h_new[i][j]
-	   [] -Función de impresión del arreglo
+	   [✓] -Función de impresión del arreglo
 	   [] -Función que cuente el número de celdas de cada grano
 	   [] -Función de métricas
 	área de los granos
