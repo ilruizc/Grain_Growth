@@ -4,6 +4,8 @@
 #include <random>
 #include <math.h>
 #include <time.h>
+#include <chrono>
+#include <omp.h>
 
 const short int N = 80; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
@@ -25,7 +27,8 @@ public:
   void fill (void);
   void fill_circle(void);
   void evolution(int t);
-  void evolution_aux (int a, int b, int c, int d, int i, int j, int prob);
+  void evolution_aux1 (int a, int b, int c, int d, int i, int j);
+  void evolution_aux2 (int a, int b, int c, int d, int i, int j, int prob);
   void array_change(void);
   void print_array(const char * Arreglo);
   int h_old_get(int i, int j);
@@ -37,7 +40,7 @@ void Material1::fill (void){
   std::uniform_int_distribution<> rand(1, Q);
   for(int i=0; i<N; i++){
     for(int j=0; j<N; j++){
-      h_old[i][j] = 1;
+      h_old[i][j] = 0;
     }
   }
   
@@ -57,10 +60,11 @@ void Material1::fill (void){
     }
   }
 }
-void Material1::evolution_aux (int a, int b, int c, int d, int i, int j, int prob){
+void Material1::evolution_aux1 (int a, int b, int c, int d, int i, int j){
  
   // a=(i,j-1) ; b = (i-1,j) ; c = (i,j+1) ; d = (i+1,j)
   if (a==b && b==c && c==d){
+    h_old[i][j] = a;
     h_new[i][j]=h_old[i][j];
   }
 
@@ -123,9 +127,11 @@ void Material1::evolution_aux (int a, int b, int c, int d, int i, int j, int pro
       }
       
     }
-    else {
-      //std::cout<<prob<<std::endl;
-      if(1<=prob && prob<=25){
+  }
+}
+
+void Material1::evolution_aux2 (int a, int b, int c, int d, int i, int j, int prob){
+ if(1<=prob && prob<=25){
 	h_new[i][j] = a;
       }
       else if (25<prob && prob<=50){
@@ -140,8 +146,6 @@ void Material1::evolution_aux (int a, int b, int c, int d, int i, int j, int pro
       else{
 	h_new[i][j] = h_old[i][j];
       }
-    }
-  }
 }
 void Material1::evolution(int t){
   int a,b,c,d; //variables auxiliares: a=(i,j-1) ; b = (i-1,j) ; c = (i,j+1) ; d = (i+1,j)
@@ -159,24 +163,61 @@ void Material1::evolution(int t){
 	b = h_old[N-2][j];
 	c = h_old[i][j+1];
 	d = h_old[i+1][j];
-	evolution_aux (a, b, c,  d,  i, j, rand(gen));
+	evolution_aux1 (a, b, c,  d,  i, j);
+	evolution_aux2 (a, b, c,  d,  i, j, rand(gen));
       }
       else if (j == 0){
 	a = h_old[i][N-2];
 	b = h_old[i-1][j];
 	c = h_old[i][j+1];
 	d = h_old[i+1][j];
-	evolution_aux (a, b, c,  d,  i, j, rand(gen));
+	evolution_aux1 (a, b, c,  d,  i, j);
+	evolution_aux2 (a, b, c,  d,  i, j, rand(gen));
       }
       else {
 	a = h_old[i][j-1];
 	b = h_old[i-1][j];
 	c = h_old[i][j+1];
 	d = h_old[i+1][j];
-	evolution_aux (a, b, c,  d,  i, j, rand(gen));
+	evolution_aux1 (a, b, c,  d,  i, j);
+	evolution_aux2 (a, b, c,  d,  i, j, rand(gen));
       }
     }
-  } 
+  }
+
+  for(int i=0; i<(N-1); i++){
+    for(int j=0; j<(N-1); j++){
+      if (i == 0){
+	if (j== 0){
+	  a = h_old[i][N-2];
+	}
+	else{
+	  a = h_old[i][j-1];
+	}
+	b = h_old[N-2][j];
+	c = h_old[i][j+1];
+	d = h_old[i+1][j];
+	evolution_aux1 (a, b, c,  d,  i, j);
+      }
+      else if (j == 0){
+	a = h_old[i][N-2];
+	b = h_old[i-1][j];
+	c = h_old[i][j+1];
+	d = h_old[i+1][j];
+	evolution_aux1 (a, b, c,  d,  i, j);
+      }
+      else {
+	a = h_old[i][j-1];
+	b = h_old[i-1][j];
+	c = h_old[i][j+1];
+	d = h_old[i+1][j];
+	evolution_aux1 (a, b, c,  d,  i, j);
+      }
+    }
+  }
+  
+
+  
 }
 void Material1::array_change(void){
  for(int i=0; i<(N-1); i++){
@@ -253,20 +294,19 @@ public:
 };
 
 void Material::fill_circle(void){
- 
+    
   for(int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       h_old[i][j] = 1;
     }
   }
   for(int i=0; i<N; i++){
-    for(int j=0; j<N; j++){
-      if(((i-(N/2))*(i-(N/2)))+((j-(N/2))*(j-(N/2)))<r*r){
-	h_old[i][j] = 2;
+      for(int j=0; j<N; j++){
+	if(((i-(N/2))*(i-(N/2)))+((j-(N/2))*(j-(N/2)))<r*r){
+	  h_old[i][j] = 2;
+	}
       }
-    }
   }
-  
 }
 void Material::fill (void){
   std::mt19937 gen(N);
@@ -802,17 +842,44 @@ bool Material::is_boundary (int i, int j){
 }
 
 long int Material::Boundary_energy (void){
- long int Energy = 0;
-  for (int ii=0;ii<N;ii++){
-    for(int jj=0;jj<N;jj++){
-      for(int u=0;u<25;u++){
-	if (h_old[ii][jj]!=neighborhood[u]){
-	  Energy++;
-	  //  std::cout<<Energy<<std::endl;
-	} 
-      }
+  long int Energy = 0;
+#pragma omp parallel reduction (+: Energy)
+ {
+   int thid = omp_get_thread_num();
+   int nth = omp_get_num_threads();
+   int localsize = N/nth;
+   int Lmin = thid*localsize;
+   int Lmax = Lmin+localsize;
+   int L_E = 0;
+     for (int ii= Lmin ;ii<Lmax;ii++){
+       for(int jj=Lmin;jj<Lmax;jj++){
+	 for(int u=0;u<25;u++){
+	   if (h_old[ii][jj]==neighborhood[u]){
+	     continue;
+	   }
+	   else {
+	     Energy++;
+	   } 
+	 }
+       }
+     }
+     std::cout<<Lmin<<'\t'<<Lmax<<'\t'<<thid<<std::endl;
+ }
+std::cout<<Energy<<std::endl;
+ 
+ Energy = 0;
+ for (int ii= 0 ;ii<N;ii++){
+   for(int jj=0;jj<N;jj++){
+     for(int u=0;u<25;u++){
+       if (h_old[ii][jj]!=neighborhood[u]){
+	 Energy++;
+       } 
+     }
     }
-  }
+ }
+ std::cout<<Energy<<std::endl;
+ 
+ 
   return Energy;
 }
 
@@ -833,7 +900,6 @@ void Material::Delta_E_min (int i, int j){
   
   Delta_ET = -R*tempt [i][j]*log (dis(gen));
   EB_0 = Boundary_energy ();
-  
   for (int u = 0; u < 25 ; u++){
     if(u==12){
       neighborhood [12] = value_aux;
@@ -851,13 +917,11 @@ void Material::Delta_E_min (int i, int j){
     }
     Delta_E_B [u] = EB;
   }
-  
   for(int u = 0; u<25; u++){
     if(Delta_E_B[u] == E_aux){
       count++;
       }
   }
-  // 
   if (count > 1){
     float part = 100.0/count;
     float rand_num = dis(gen) *100.0;
@@ -888,7 +952,7 @@ void Material::evolve (void){
 
   std::mt19937 gen(time(NULL));
   
-  
+ 
   for (int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       if (is_boundary(i,j)==true){
@@ -899,6 +963,9 @@ void Material::evolve (void){
       }
     }
   }
+  
+
+  
   D_Emin = Delta_E [0][0];
   for (int i=0; i<N; i++){
     for(int j=0; j<N; j++){  
@@ -907,13 +974,13 @@ void Material::evolve (void){
       }
     }
   }
+
+ 
   for (int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       if (Delta_E [i][j] != 0){
 	std::bernoulli_distribution prob(probability (i, j, M_max, D_Emin));
-	//std::cout<<probability (i, j, M_max, D_Emin)<<std::endl;
 	if (prob(gen) == false){
-	  //std::cout<<"aqui"<<std::endl;
 	  h_new[i][j] = h_old [i][j];
 	}
       }
@@ -922,6 +989,7 @@ void Material::evolve (void){
       }
     }
   }
+  
   for (int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       if (j == N-1){
@@ -966,9 +1034,9 @@ void Material::print_gradient(const char * Arreglo)
 
 /*------------------Main-------------------*/
 int main (void){
-  Material1 initial_sys;
+  /* Material1 initial_sys;
   initial_sys.fill();
-  for(int t =0 ; t<30; t++){
+  for(int t =0 ; t<10; t++){
     initial_sys.evolution(t);
     initial_sys.array_change();
   }
@@ -978,16 +1046,19 @@ int main (void){
     for (int j = 0; j<N; j++){
       granos.h_old_set(i,j,initial_sys.h_old_get(i,j));
     }
-  }
+    }*/
+  Material granos;
   granos.fill_tempt(1000.0,1000.0);
-  //granos.fill();
+  granos.fill_circle();
+  granos.neighbor_def (N/2, N/2);
+  granos.Boundary_energy();
   granos.print_array("Arreglo1.dat");
-  for (int t = 0; t <10; t++){
+  /* for (int t = 0; t <10; t++){
     granos.evolve();
     std::cout<<t<<std::endl;
   }
   granos.print_array("Arreglo2.dat");
-  
+  */
   return 0;
   
 }
