@@ -5,7 +5,9 @@
 #include <math.h>
 #include <time.h>
 #include <chrono>
+#include <algorithm>
 #include <omp.h>
+#include <bits/stdc++.h>
 
 const short int N = 80; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
@@ -35,9 +37,7 @@ public:
 };
   
 void Material1::fill (void){
-  std::mt19937 gen(N);
-  std::binomial_distribution <> d(1, 1);
-  std::uniform_int_distribution<> rand(1, Q);
+  int count = 1;
   for(int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       h_old[i][j] = 0;
@@ -53,13 +53,13 @@ void Material1::fill (void){
 	h_old[i][j] = h_old[i][0];
       }
       else {
-	if(d(gen) == 1){
-	  h_old[i][j]= rand(gen);
-	}
+	h_old[i][j]= count;
+	count++;
       }
     }
   }
 }
+
 void Material1::evolution_aux1 (int a, int b, int c, int d, int i, int j){
  
   // a=(i,j-1) ; b = (i-1,j) ; c = (i,j+1) ; d = (i+1,j)
@@ -269,7 +269,6 @@ class Material
 private:
   short int h_old[N][N];
   short int h_new[N][N];
-  int Delta_E_B [25];
   float Delta_E[N][N];
   short int neighborhood [25]; //Numero de segundos vecinos de Moore
   float tempt [N][N];
@@ -843,49 +842,25 @@ bool Material::is_boundary (int i, int j){
 
 long int Material::Boundary_energy (void){
   long int Energy = 0;
-#pragma omp parallel reduction (+: Energy)
- {
-   int thid = omp_get_thread_num();
-   int nth = omp_get_num_threads();
-   int localsize = N/nth;
-   int Lmin = thid*localsize;
-   int Lmax = Lmin+localsize;
-   int L_E = 0;
-     for (int ii= Lmin ;ii<Lmax;ii++){
-       for(int jj=Lmin;jj<Lmax;jj++){
-	 for(int u=0;u<25;u++){
-	   if (h_old[ii][jj]==neighborhood[u]){
-	     continue;
-	   }
-	   else {
-	     Energy++;
-	   } 
-	 }
-       }
-     }
-     std::cout<<Lmin<<'\t'<<Lmax<<'\t'<<thid<<std::endl;
- }
-std::cout<<Energy<<std::endl;
- 
- Energy = 0;
+#pragma omp parallel for collapse (2) reduction (+:Energy)
  for (int ii= 0 ;ii<N;ii++){
    for(int jj=0;jj<N;jj++){
      for(int u=0;u<25;u++){
-       if (h_old[ii][jj]!=neighborhood[u]){
+       if (h_old[ii][jj]==neighborhood[u]){
+	 continue;
+       }
+       else {
 	 Energy++;
        } 
      }
-    }
+   }
  }
- std::cout<<Energy<<std::endl;
  
- 
-  return Energy;
+  return Energy/2;
 }
 
 void Material::Delta_E_min (int i, int j){
-  
-  long int EB_0 = 0;
+ long int EB_0 = 0;
   long int EB_f = 0;
   int EB = 0;
   int E_aux = 0;
@@ -1034,9 +1009,9 @@ void Material::print_gradient(const char * Arreglo)
 
 /*------------------Main-------------------*/
 int main (void){
-  /* Material1 initial_sys;
+   Material1 initial_sys;
   initial_sys.fill();
-  for(int t =0 ; t<10; t++){
+  for(int t =0 ; t<20; t++){
     initial_sys.evolution(t);
     initial_sys.array_change();
   }
@@ -1046,19 +1021,19 @@ int main (void){
     for (int j = 0; j<N; j++){
       granos.h_old_set(i,j,initial_sys.h_old_get(i,j));
     }
-    }*/
-  Material granos;
+  }
+  
+  
   granos.fill_tempt(1000.0,1000.0);
   granos.fill_circle();
-  granos.neighbor_def (N/2, N/2);
-  granos.Boundary_energy();
+  /* granos.neighbor_def (N/2, N/2);
+     granos.Delta_E_min(N/2,N/2);*/
   granos.print_array("Arreglo1.dat");
-  /* for (int t = 0; t <10; t++){
+  for (int t = 0; t <10; t++){
     granos.evolve();
     std::cout<<t<<std::endl;
   }
   granos.print_array("Arreglo2.dat");
-  */
   return 0;
   
 }
