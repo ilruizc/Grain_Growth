@@ -860,7 +860,7 @@ long int Material::Boundary_energy (void){
 }
 
 void Material::Delta_E_min (int i, int j){
- long int EB_0 = 0;
+  /*long int EB_0 = 0;
   long int EB_f = 0;
   int EB = 0;
   int E_aux = 0;
@@ -868,32 +868,54 @@ void Material::Delta_E_min (int i, int j){
   int count = 0;
   int rand_part = 0;
   float Delta_ET = 0.0;
-  
+  std::vector <int> S(neighborhood,neighborhood+25);
+  std::vector <int> Delta_EB(25);
 
   std::mt19937 gen(time(NULL));
   std::uniform_real_distribution<> dis(0, 1);
   
   Delta_ET = -R*tempt [i][j]*log (dis(gen));
   EB_0 = Boundary_energy ();
-  for (int u = 0; u < 25 ; u++){
-    if(u==12){
-      neighborhood [12] = value_aux;
-      h_old [i][j] = value_aux;
+  
+  sort(S.begin(),S.end());
+  
+  
+  for (int u = 0; u<25; u++){
+    //std::cout<<u<<std::endl;
+    if(u == 0){
+      neighborhood [12] = S[0];
+      h_old[i][j] = S[0];
+      EB_f = Boundary_energy ();
+      EB = EB_f-EB_0;
+      if (EB<E_aux){
+	E_aux=EB;
+	h_new[i][j] = h_old[i][j];
+      }
+      Delta_EB[0] = EB;
     }
     else{
-      neighborhood [12] = neighborhood [u];
-      h_old [i][j] = neighborhood [u];
-    }
+      if (S[u] == value_aux){
+	Delta_EB[u] = 0;
+	}
+      else if(S[u-1]==S[u]){
+	Delta_EB[u] = Delta_EB[u-1];
+      }
+      else{
+	neighborhood [12] = S[u];
+	h_old [i][j] = S[u];
+      }
     EB_f = Boundary_energy ();
     EB = EB_f-EB_0;
     if (EB<E_aux){
       E_aux=EB;
       h_new[i][j] = h_old[i][j];
     }
-    Delta_E_B [u] = EB;
+    Delta_EB[u]=EB;
+    }
   }
+  
   for(int u = 0; u<25; u++){
-    if(Delta_E_B[u] == E_aux){
+    if(Delta_EB[u] == E_aux){
       count++;
       }
   }
@@ -907,11 +929,11 @@ void Material::Delta_E_min (int i, int j){
     }
     count = 0;
     for(int u = 0; u<25; u++){
-      if(Delta_E_B[u] == E_aux){
+      if(Delta_EB[u] == E_aux){
 	count++;
 	if(count == rand_part){
 	  
-	  h_new [i][j] = neighborhood [u];
+	  h_new [i][j] = S [u];
 	  break;
 	}
       }  
@@ -919,6 +941,69 @@ void Material::Delta_E_min (int i, int j){
   }
   Delta_E [i][j] = EB-Delta_ET;
   h_old[i][j] = value_aux;
+}
+*/
+
+  
+ long int EB_0 = 0;
+ long int EB_f = 0;
+ int EB = 0;
+ int E_aux = 0;
+ int value_aux = h_old[i][j];
+ int count = 0;
+ int rand_part = 0;
+ int Delta_E_B[25];
+ float Delta_ET = 0.0;
+ 
+ 
+ std::mt19937 gen(time(NULL));
+ std::uniform_real_distribution<> dis(0, 1);
+ 
+ Delta_ET = -R*tempt [i][j]*log (dis(gen));
+ EB_0 = Boundary_energy ();
+ for (int u = 0; u < 25 ; u++){
+   if(u==12){
+     neighborhood [12] = value_aux;
+     h_old [i][j] = value_aux;
+   }
+   else{
+     neighborhood [12] = neighborhood [u];
+     h_old [i][j] = neighborhood [u];
+   }
+   EB_f = Boundary_energy ();
+   EB = EB_f-EB_0;
+   if (EB<E_aux){
+     E_aux=EB;
+     h_new[i][j] = h_old[i][j];
+   }
+   Delta_E_B [u] = EB;
+ }
+ for(int u = 0; u<25; u++){
+   if(Delta_E_B[u] == E_aux){
+     count++;
+   }
+ }
+ if (count > 1){
+   float part = 100.0/count;
+   float rand_num = dis(gen) *100.0;
+   rand_part = round(rand_num/part);
+   
+   if (rand_part==0){
+     rand_part++;
+   }
+   count = 0;
+   for(int u = 0; u<25; u++){
+     if(Delta_E_B[u] == E_aux){
+       count++;
+       if(count == rand_part){	 
+	 h_new [i][j] = neighborhood [u];
+	 break;
+       }
+     }  
+   }
+ }
+ Delta_E [i][j] = EB-Delta_ET;
+ h_old[i][j] = value_aux;
 }
 
 void Material::evolve (void){
