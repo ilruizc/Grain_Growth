@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <random>
-
+#include <bits/stdc++.h>
 const int N = 200; //Tamaño del arreglo
 const int T = 200; // Tiempo máximo
 const int Q = 1000; //Número de estados
@@ -23,10 +23,11 @@ public:
   void size_count (void);
   void print_array(const char * Arreglo);
   int getArea (int a);
+  void metrics(float &mean_area, float &mean_size, const char * distribucion);
 };
   
 void Material::fill (void){
-  std::mt19937 gen(N);
+  std::mt19937 gen(0);
   std::binomial_distribution <> d(1, 1);
   std::uniform_int_distribution<> rand(1, Q);
   for(int i=0; i<N; i++){
@@ -214,8 +215,8 @@ void Material::array_change(void){
  h_old[N-1][N-1] = h_old[0][0];
 }
 void Material::size_count (void){
-  for(int u =0; u<Q; u++){
-    areas[u] =0;
+  for(int u =0; u<(Q); u++){
+    areas[u] = 0;
   }
   
   for (int i=0; i<N-1; i++){
@@ -224,7 +225,47 @@ void Material::size_count (void){
     }
   }
 }
+
+void Material::metrics(float &mean_area, float &mean_size, const char * distribucion){
+  std::ofstream MiArchivo(distribucion);
+  int max_freq=0;;
+  int size = Q;
+  std::vector <int> areas_calc(areas,areas+(size));
   
+  sort(areas_calc.begin(),areas_calc.end());
+  areas_calc.erase(std::remove(areas_calc.begin(),areas_calc.end(), 0),areas_calc.end());
+  areas_calc.shrink_to_fit();
+  mean_area = std::reduce(areas_calc.begin(),areas_calc.end())/areas_calc.size();
+  
+  std::map<int, float> counts;
+  for (auto v : areas_calc)
+    ++counts[v];
+  
+  
+  for (auto v : areas_calc){
+    if(max_freq<counts[v]){
+      max_freq = counts[v];
+    }
+  }
+  std::vector<float> radius(counts.size());
+  std::vector<float> frecuency(counts.size());
+  int u = 0;
+  for (auto const &p : counts ){
+    radius [u] = sqrt(p.first);
+    frecuency[u] = p.second/max_freq;
+    u++;
+  }
+  mean_size = std::reduce(radius.begin(),radius.end())/radius.size();
+  for (int v = 0; v<u; v++){
+    radius[v] = log(radius[v]/mean_size);
+    }
+  for( int v= 0; v<u; v++){
+    MiArchivo<<radius[v]<<'\t'<<frecuency[v]<<std::endl;
+  }
+  MiArchivo.close();
+}
+
+
 void Material::print_array(const char * Arreglo){
   std::ofstream MiArchivo(Arreglo);
   for(int i=0;i<N;i++){
@@ -240,6 +281,7 @@ int Material::getArea (int a){
 }
 
 int main (void){
+  std::ofstream MiArchivo ("time_evolution.dat");
   /*std::ofstream Archivo("Area_circulo.dat");
   Material circulo;
   circulo.fill_circle();
@@ -256,19 +298,23 @@ int main (void){
     }
   circulo.print_array("Circulo2.dat");
   Archivo.close();*/
-
+  float mean_area = 0;
+  float mean_size = 0;
   
   Material granos;
   granos.fill();
   granos.print_array("Arreglo1.dat");
-  for(int t =0 ; t<500; t++){
+  // granos.area_distribution("area_distr.dat");
+  for(int t =0 ; t<10000; t++){
     granos.evolution(t);
     granos.array_change();
+    granos.size_count();
+    if(t%100 == 0){
+    granos.metrics (mean_area,mean_size, "area_distr.dat");
+    std::cout<<t<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
+    MiArchivo<<t<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
+    }
   }
   granos.print_array("Arreglo2.dat");
-   for(int t =0 ; t<500; t++){
-    granos.evolution(t);
-    granos.array_change();
-  }
-  granos.print_array("Arreglo3.dat");
+  MiArchivo.close();
 }

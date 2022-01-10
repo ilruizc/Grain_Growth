@@ -11,8 +11,8 @@
 
 const short int N = 80; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
-const short int Q = 20; //Número de estados
-const short int r = 20; //Radio en celdas de la región caliente
+const short int Q = 30; //Número de estados
+const short int r = 10; //Radio en celdas de la región caliente
 const float E_A = 2; // Energía de activación, como multiplo de la constante de Boltzmann
 const float R = 8.31446261; // Constante del Gas ideal
 
@@ -38,13 +38,19 @@ public:
   
 void Material1::fill (void){
   int count = 1;
+  std::mt19937 gen(N);
+  std::bernoulli_distribution rand(0.75);
   for(int i=0; i<N; i++){
     for(int j=0; j<N; j++){
-      h_old[i][j] = 0;
+      h_old[i][j] = 1;
     }
   }
+  for(int u = 0; u<N; u++){
+    h_old[0][u] = count;
+    count++;
+  }
   
-  for(int i=0; i<N; i++){
+  for(int i=1; i<N; i++){
     for(int j=0; j<N; j++){
       if (i == (N-1)){
 	h_old[i][j] = h_old[0][j];
@@ -53,7 +59,12 @@ void Material1::fill (void){
 	h_old[i][j] = h_old[i][0];
       }
       else {
-	h_old[i][j]= count;
+	if(rand(gen) == true){
+	h_old[i][j]= count+1000;
+	}
+	else {
+	  h_old[i][j]= count;
+	}
 	count++;
       }
     }
@@ -271,8 +282,8 @@ private:
   short int h_new[N][N];
   float Delta_E[N][N];
   short int neighborhood [25]; //Numero de segundos vecinos de Moore
+  int areas [N*N];
   float tempt [N][N];
-  int areas[Q];
   bool frontier [N][N];
 public:
   void fill (void);
@@ -286,10 +297,10 @@ public:
   void Delta_E_min (int i, int j);
   void evolve (void);
   void h_old_set(int i, int j, int v);
-  // void size_count (void);
+  void size_count ();
   void print_array(const char * Arreglo);
   void print_gradient(const char * Arreglo);
-  // int getArea (int a);
+  int mean_area (void);
 };
 
 void Material::fill_circle(void){
@@ -841,7 +852,7 @@ bool Material::is_boundary (int i, int j){
 }
 
 long int Material::Boundary_energy (void){
-  long int Energy = 0;
+   long int Energy = 0;
 #pragma omp parallel for collapse (2) reduction (+:Energy)
  for (int ii= 0 ;ii<N;ii++){
    for(int jj=0;jj<N;jj++){
@@ -855,12 +866,11 @@ long int Material::Boundary_energy (void){
      }
    }
  }
- 
   return Energy/2;
-}
+  }
 
 void Material::Delta_E_min (int i, int j){
-  /*long int EB_0 = 0;
+  long int EB_0 = 0;
   long int EB_f = 0;
   int EB = 0;
   int E_aux = 0;
@@ -869,7 +879,7 @@ void Material::Delta_E_min (int i, int j){
   int rand_part = 0;
   float Delta_ET = 0.0;
   std::vector <int> S(neighborhood,neighborhood+25);
-  std::vector <int> Delta_EB(25);
+  
 
   std::mt19937 gen(time(NULL));
   std::uniform_real_distribution<> dis(0, 1);
@@ -878,9 +888,10 @@ void Material::Delta_E_min (int i, int j){
   EB_0 = Boundary_energy ();
   
   sort(S.begin(),S.end());
-  
-  
-  for (int u = 0; u<25; u++){
+  S.erase(std::remove(S.begin(),S.end(), 0),S.end());
+  S.shrink_to_fit();
+  std::vector <int> Delta_EB(S.size());
+  for (int u = 0; u<S.size(); u++){
     //std::cout<<u<<std::endl;
     if(u == 0){
       neighborhood [12] = S[0];
@@ -903,18 +914,18 @@ void Material::Delta_E_min (int i, int j){
       else{
 	neighborhood [12] = S[u];
 	h_old [i][j] = S[u];
+	EB_f = Boundary_energy ();
+	EB = EB_f-EB_0;
+	if (EB<E_aux){
+	  E_aux=EB;
+	  h_new[i][j] = h_old[i][j];
+	}
+	Delta_EB[u]=EB;
       }
-    EB_f = Boundary_energy ();
-    EB = EB_f-EB_0;
-    if (EB<E_aux){
-      E_aux=EB;
-      h_new[i][j] = h_old[i][j];
-    }
-    Delta_EB[u]=EB;
     }
   }
   
-  for(int u = 0; u<25; u++){
+  for(int u = 0; u<S.size(); u++){
     if(Delta_EB[u] == E_aux){
       count++;
       }
@@ -928,7 +939,7 @@ void Material::Delta_E_min (int i, int j){
       rand_part++;
     }
     count = 0;
-    for(int u = 0; u<25; u++){
+    for(int u = 0; u<S.size(); u++){
       if(Delta_EB[u] == E_aux){
 	count++;
 	if(count == rand_part){
@@ -941,10 +952,9 @@ void Material::Delta_E_min (int i, int j){
   }
   Delta_E [i][j] = EB-Delta_ET;
   h_old[i][j] = value_aux;
-}
-*/
+  }
+  /*
 
-  
  long int EB_0 = 0;
  long int EB_f = 0;
  int EB = 0;
@@ -1005,7 +1015,7 @@ void Material::Delta_E_min (int i, int j){
  Delta_E [i][j] = EB-Delta_ET;
  h_old[i][j] = value_aux;
 }
-
+  */
 void Material::evolve (void){
   float D_Emin = 0.0;
   float M_max = exp ((-E_A)/tempt [N/2][N/2]);
@@ -1066,6 +1076,26 @@ void Material::evolve (void){
   
 }
 
+void Material::size_count (void){
+  for(int u =0; u<(N*N); u++){
+    areas[u] = 0;
+  }
+  
+  for (int i=0; i<N-1; i++){
+    for(int j=0; j<N-1; j++){
+      areas[(h_old [i][j])-1]++;
+    }
+  }
+}
+int Material::mean_area (void){
+  std::vector <int> areas_calc(areas,areas+(N*N));
+  sort(areas_calc.begin(),areas_calc.end());
+  areas_calc.erase(std::remove(areas_calc.begin(),areas_calc.end(), 0),areas_calc.end());
+  areas_calc.shrink_to_fit();
+  return (std::reduce(areas_calc.begin(),areas_calc.end())/areas_calc.size());
+}
+
+
 int Material::neighbor_get (int ii){
   return neighborhood[ii];
 }
@@ -1096,11 +1126,12 @@ void Material::print_gradient(const char * Arreglo)
 int main (void){
    Material1 initial_sys;
   initial_sys.fill();
-  for(int t =0 ; t<20; t++){
+  initial_sys.print_array("Inicial1.dat");
+  for(int t =0 ; t<10; t++){
     initial_sys.evolution(t);
     initial_sys.array_change();
   }
-  initial_sys.print_array("Inicial.dat");
+  initial_sys.print_array("Inicial2.dat");
   Material granos;
   for (int i = 0; i<N ; i++){
     for (int j = 0; j<N; j++){
@@ -1108,17 +1139,20 @@ int main (void){
     }
   }
   
-  
-  granos.fill_tempt(1000.0,1000.0);
-  granos.fill_circle();
+  granos.fill_tempt(250.0,250.0);
+  //granos.fill_circle();
   /* granos.neighbor_def (N/2, N/2);
      granos.Delta_E_min(N/2,N/2);*/
-  granos.print_array("Arreglo1.dat");
-  for (int t = 0; t <10; t++){
+  granos.size_count();
+  int a_0 = granos.mean_area();
+  std::cout<<0<<'\t'<<a_0<<std::endl;
+  granos.print_array("Arreglo1_o.dat");
+  for (int t = 1; t <1; t++){
     granos.evolve();
-    std::cout<<t<<std::endl;
+    granos.size_count();
+    std::cout<<t<<'\t'<<granos.mean_area()<<std::endl;
   }
-  granos.print_array("Arreglo2.dat");
+  granos.print_array("Arreglo2_o.dat");
   return 0;
   
 }
