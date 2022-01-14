@@ -12,7 +12,7 @@
 const short int N = 200; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
 const short int r = 40; //Radio en celdas de la región caliente
-const float E_A = 1.0*pow(10,5); // Energía de activación, como multiplo de la constante de Boltzmann
+const float E_A = 1.25*pow(10,5); // Energía de activación, como multiplo de la constante de Boltzmann
 const float R = 8.31446261; // Constante del Gas ideal
 
 /*------------------Clase Paper1-------------------*/
@@ -292,8 +292,8 @@ public:
   int neighbor_get (int ii);
   bool is_boundary (int i, int j);
   long int Boundary_energy (void);
-  void Delta_E_min (int i, int j);
-  void evolve (void);
+  void Delta_E_min (int i, int j, int t);
+  void evolve (int t);
   void h_old_set(int i, int j, int v);
   void size_count (void);
   void print_array(const char * Arreglo);
@@ -844,7 +844,7 @@ long int Material::Boundary_energy (void){
   return Energy/2;
   }
 
-void Material::Delta_E_min (int i, int j){
+void Material::Delta_E_min(int i, int j,int t){
   long int EB_0 = 0;
   long int EB_f = 0;
   int EB = 0;
@@ -856,7 +856,7 @@ void Material::Delta_E_min (int i, int j){
   std::vector <int> S(neighborhood,neighborhood+25);
   
 
-  std::mt19937 gen(time(NULL));
+  std::mt19937 gen(t);
   std::uniform_real_distribution<> dis(0, 1);
   
   Delta_ET = -R*tempt [i][j]*log (dis(gen));
@@ -929,17 +929,17 @@ void Material::Delta_E_min (int i, int j){
   h_old[i][j] = value_aux;
   }
 
-void Material::evolve (void){
+void Material::evolve (int t){
   float D_Emin = 0.0;
   float M_max = exp ((-E_A)/tempt [N/2][N/2]);
 
-  std::mt19937 gen(time(NULL));
+  std::mt19937 gen(t);
   
  
   for (int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       if (is_boundary(i,j)==true){
-	Delta_E_min(i,j);
+	Delta_E_min(i,j, t);
       }
       else {
 	Delta_E [i][j] = 0;
@@ -1098,8 +1098,8 @@ int main (void){
   std::cout<<0<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
   MiArchivo<<0<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
   granos.print_array("C2_A1.dat");
-  for (int t = 1; t <=560; t++){
-    granos.evolve();
+  for (int t = 1; t <=30; t++){
+    granos.evolve(t);
 
     if(t%10==0){
       granos.size_count();
