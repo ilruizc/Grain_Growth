@@ -3,8 +3,11 @@
 #include <fstream>
 #include <random>
 #include <bits/stdc++.h>
+
+
 const int N = 200; //Tamaño del arreglo
 const int T = 200; // Tiempo máximo
+const int r = 40;  // Radio del circulo
 const int Q = 1000; //Número de estados
 
 class Material
@@ -18,16 +21,18 @@ public:
   void fill (void);
   void fill_circle(void);
   void evolution(int t);
-  void evolution_aux (int a, int b, int c, int d, int i, int j, int prob);
+  void evolution_aux1 (int a, int b, int c, int d, int i, int j);
+  void evolution_aux2 (int a, int b, int c, int d, int i, int j, int prob);
   void array_change(void);
+  int circle_size_count(void);
   void size_count (void);
   void print_array(const char * Arreglo);
   int getArea (int a);
-  void metrics(float &mean_area, float &mean_size, const char * distribucion);
+  void metrics(float &mean_area, float &mean_size, bool print_distr );
 };
   
 void Material::fill (void){
-  std::mt19937 gen(0);
+  std::mt19937 gen(N*N);
   std::binomial_distribution <> d(1, 1);
   std::uniform_int_distribution<> rand(1, Q);
   for(int i=0; i<N; i++){
@@ -61,17 +66,18 @@ void Material::fill_circle(void){
   }
   for(int i=0; i<N; i++){
     for(int j=0; j<N; j++){
-      if(((i-(N/2))*(i-(N/2)))+((j-(N/2))*(j-(N/2)))<(N/6.7)*(N/6.7)){
+      if(((i-(N/2))*(i-(N/2)))+((j-(N/2))*(j-(N/2)))<r*r){
 	h_old[i][j] = 2;
       }
     }
   }
   
 }
-void Material::evolution_aux (int a, int b, int c, int d, int i, int j, int prob){
+void Material::evolution_aux1 (int a, int b, int c, int d, int i, int j){
  
   // a=(i,j-1) ; b = (i-1,j) ; c = (i,j+1) ; d = (i+1,j)
   if (a==b && b==c && c==d){
+    h_old[i][j] = a;
     h_new[i][j]=h_old[i][j];
   }
 
@@ -134,9 +140,11 @@ void Material::evolution_aux (int a, int b, int c, int d, int i, int j, int prob
       }
       
     }
-    else {
-      //std::cout<<prob<<std::endl;
-      if(1<=prob && prob<=25){
+  }
+}
+
+void Material::evolution_aux2 (int a, int b, int c, int d, int i, int j, int prob){
+ if(1<=prob && prob<=25){
 	h_new[i][j] = a;
       }
       else if (25<prob && prob<=50){
@@ -151,8 +159,6 @@ void Material::evolution_aux (int a, int b, int c, int d, int i, int j, int prob
       else{
 	h_new[i][j] = h_old[i][j];
       }
-    }
-  }
 }
 void Material::evolution(int t){
   int a,b,c,d; //variables auxiliares: a=(i,j-1) ; b = (i-1,j) ; c = (i,j+1) ; d = (i+1,j)
@@ -170,24 +176,58 @@ void Material::evolution(int t){
 	b = h_old[N-2][j];
 	c = h_old[i][j+1];
 	d = h_old[i+1][j];
-	evolution_aux (a, b, c,  d,  i, j, rand(gen));
+	evolution_aux1 (a, b, c,  d,  i, j);
+	evolution_aux2 (a, b, c,  d,  i, j, rand(gen));
       }
       else if (j == 0){
 	a = h_old[i][N-2];
 	b = h_old[i-1][j];
 	c = h_old[i][j+1];
 	d = h_old[i+1][j];
-	evolution_aux (a, b, c,  d,  i, j, rand(gen));
+	evolution_aux1 (a, b, c,  d,  i, j);
+	evolution_aux2 (a, b, c,  d,  i, j, rand(gen));
       }
       else {
 	a = h_old[i][j-1];
 	b = h_old[i-1][j];
 	c = h_old[i][j+1];
 	d = h_old[i+1][j];
-	evolution_aux (a, b, c,  d,  i, j, rand(gen));
+	evolution_aux1 (a, b, c,  d,  i, j);
+	evolution_aux2 (a, b, c,  d,  i, j, rand(gen));
       }
     }
-  } 
+  }
+
+  for(int i=0; i<(N-1); i++){
+    for(int j=0; j<(N-1); j++){
+      if (i == 0){
+	if (j== 0){
+	  a = h_old[i][N-2];
+	}
+	else{
+	  a = h_old[i][j-1];
+	}
+	b = h_old[N-2][j];
+	c = h_old[i][j+1];
+	d = h_old[i+1][j];
+	evolution_aux1 (a, b, c,  d,  i, j);
+      }
+      else if (j == 0){
+	a = h_old[i][N-2];
+	b = h_old[i-1][j];
+	c = h_old[i][j+1];
+	d = h_old[i+1][j];
+	evolution_aux1 (a, b, c,  d,  i, j);
+      }
+      else {
+	a = h_old[i][j-1];
+	b = h_old[i-1][j];
+	c = h_old[i][j+1];
+	d = h_old[i+1][j];
+	evolution_aux1 (a, b, c,  d,  i, j);
+      }
+    }
+  }  
 }
 void Material::array_change(void){
  for(int i=0; i<(N-1); i++){
@@ -214,28 +254,40 @@ void Material::array_change(void){
  }
  h_old[N-1][N-1] = h_old[0][0];
 }
+int Material::circle_size_count(void){
+  int count = 0;
+   for (int i=0; i<N; i++){
+    for(int j=0; j<N; j++){
+      if(h_old [i][j]==2){
+	count++;
+      }
+    }
+  }
+   return count;
+}
+  
 void Material::size_count (void){
   for(int u =0; u<(Q); u++){
     areas[u] = 0;
   }
   
-  for (int i=0; i<N-1; i++){
-    for(int j=0; j<N-1; j++){
+  for (int i=0; i<N; i++){
+    for(int j=0; j<N; j++){
       areas[(h_old [i][j])-1]++;
     }
   }
 }
 
-void Material::metrics(float &mean_area, float &mean_size, const char * distribucion){
-  std::ofstream MiArchivo(distribucion);
-  int max_freq=0;;
+void Material::metrics(float &mean_area, float &mean_size, bool print_distr){
+  
+  float max_freq=0;;
   int size = Q;
   std::vector <int> areas_calc(areas,areas+(size));
   
   sort(areas_calc.begin(),areas_calc.end());
   areas_calc.erase(std::remove(areas_calc.begin(),areas_calc.end(), 0),areas_calc.end());
   areas_calc.shrink_to_fit();
-  mean_area = std::reduce(areas_calc.begin(),areas_calc.end())/areas_calc.size();
+  mean_area = std::accumulate(areas_calc.begin(),areas_calc.end(),0)/areas_calc.size();
   
   std::map<int, float> counts;
   for (auto v : areas_calc)
@@ -255,14 +307,17 @@ void Material::metrics(float &mean_area, float &mean_size, const char * distribu
     frecuency[u] = p.second/max_freq;
     u++;
   }
-  mean_size = std::reduce(radius.begin(),radius.end())/radius.size();
+  mean_size = std::accumulate(radius.begin(),radius.end(),0)/radius.size();
   for (int v = 0; v<u; v++){
     radius[v] = log(radius[v]/mean_size);
     }
-  for( int v= 0; v<u; v++){
-    MiArchivo<<radius[v]<<'\t'<<frecuency[v]<<std::endl;
+  if (print_distr == true){
+    std::ofstream MiArchivo("area_distr_1.dat");
+    for( int v= 0; v<u; v++){
+      MiArchivo<<radius[v]<<'\t'<<frecuency[v]<<std::endl;
+    }
+    MiArchivo.close();
   }
-  MiArchivo.close();
 }
 
 
@@ -281,40 +336,59 @@ int Material::getArea (int a){
 }
 
 int main (void){
-  std::ofstream MiArchivo ("time_evolution.dat");
-  /*std::ofstream Archivo("Area_circulo.dat");
+  std::ofstream MiArchivo ("size_evolve_1.dat");
+  std::ofstream Archivo("Area_circulo.dat");
   Material circulo;
   circulo.fill_circle();
   circulo.print_array("Circulo1.dat");
-  int Area_max = 0;
-  circulo.size_count();
-  Area_max = circulo.getArea(1);
-  // std::cout<<Area_max<<std::endl;
-   for(int t =0 ; t<1600; t++){
+  float area_circ = 0;
+  int area_0 = 0;
+  area_0 = circulo.circle_size_count();
+  std::cout<<0<<'\t'<<area_0/area_0<<std::endl;
+  Archivo<<0<<'\t'<<area_0/area_0<<std::endl;
+   for(int t =1 ; t<1600; t++){
     circulo.evolution(t);
     circulo.array_change();
-    circulo.size_count();
-    Archivo<<t<<'\t'<<(1.0*circulo.getArea(1))/(1.0*Area_max)<<std::endl;
+    area_circ = circulo.circle_size_count();
+    Archivo<<t<<'\t'<<area_circ/area_0<<std::endl;
+    std::cout<<t<<'\t'<<area_circ/area_0<<std::endl;
+    if(t == 400){
+      circulo.print_array("Circulo2.dat");
     }
-  circulo.print_array("Circulo2.dat");
-  Archivo.close();*/
+    else if (t == 800){
+      circulo.print_array("Circulo3.dat");   
+    }
+    else if (t == 1200){
+      circulo.print_array("Circulo4.dat");   
+    }
+   } 
+   circulo.print_array("Circulo5.dat"); 
+     
   float mean_area = 0;
   float mean_size = 0;
   
   Material granos;
   granos.fill();
-  granos.print_array("Arreglo1.dat");
-  // granos.area_distribution("area_distr.dat");
-  for(int t =0 ; t<10000; t++){
+  granos.print_array("C1A1.dat");
+  for(int t =0 ; t<=4000; t++){
     granos.evolution(t);
     granos.array_change();
-    granos.size_count();
     if(t%100 == 0){
-    granos.metrics (mean_area,mean_size, "area_distr.dat");
-    std::cout<<t<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
-    MiArchivo<<t<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
-    }
+      if (t == 200){
+	granos.metrics (mean_area,mean_size, true);
+	granos.print_array("C1A2.dat");
+      }
+      else if( t == 1000){
+	granos.print_array("C1A3.dat");
+      }
+       else if( t == 4000){
+	granos.print_array("C1A4.dat");
+      }
+      granos.size_count();
+      granos.metrics (mean_area,mean_size, false);
+      std::cout<<t<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
+      MiArchivo<<t<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
+    } 
   }
-  granos.print_array("Arreglo2.dat");
   MiArchivo.close();
 }

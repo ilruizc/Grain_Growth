@@ -5,4 +5,4 @@ All: 1.x 2.x
 2: Paper2.cpp 
 	g++  -g  -fsanitize=address -fopenmp  $<  -o 2.x 
 clean: 
-	rm ./a.out *~ *.dat *.x
+	rm ./a.out *~  *.x

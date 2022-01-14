@@ -9,11 +9,10 @@
 #include <omp.h>
 #include <bits/stdc++.h>
 
-const short int N = 80; //Tamaño del arreglo
+const short int N = 200; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
-const short int Q = 30; //Número de estados
-const short int r = 10; //Radio en celdas de la región caliente
-const float E_A = 2; // Energía de activación, como multiplo de la constante de Boltzmann
+const short int r = 40; //Radio en celdas de la región caliente
+const float E_A = 1.0*pow(10,5); // Energía de activación, como multiplo de la constante de Boltzmann
 const float R = 8.31446261; // Constante del Gas ideal
 
 /*------------------Clase Paper1-------------------*/
@@ -23,7 +22,7 @@ class Material1
 private:
   int h_old[N][N];
   int h_new[N][N];
-  int areas[Q];
+  int areas[N*N+1000];
 
 public:
   void fill (void);
@@ -87,7 +86,7 @@ void Material1::evolution_aux1 (int a, int b, int c, int d, int i, int j){
     }
       else if(j==0){
 	h_new[i][j] = a;
-	h_new[i][j] = a;
+	h_new[i][N-1] = a;
       }
       else{
 	h_new[i][j] = a;
@@ -102,7 +101,7 @@ void Material1::evolution_aux1 (int a, int b, int c, int d, int i, int j){
       }
       else if(j==0){
 	h_new[i][j] = b;
-	h_new[i][j] = b;
+	h_new[i][N-1] = b;
     }
       else{
 	h_new[i][j] = b;
@@ -286,7 +285,6 @@ private:
   float tempt [N][N];
   bool frontier [N][N];
 public:
-  void fill (void);
   void fill_tempt (float T_min, float T_max);
   void fill_circle(void);
   float probability (int i, int j, float M_max, float D_Emin);
@@ -297,9 +295,10 @@ public:
   void Delta_E_min (int i, int j);
   void evolve (void);
   void h_old_set(int i, int j, int v);
-  void size_count ();
+  void size_count (void);
   void print_array(const char * Arreglo);
   void print_gradient(const char * Arreglo);
+  void metrics(float &mean_area, float &mean_size, bool dist);
   int mean_area (void);
 };
 
@@ -318,31 +317,7 @@ void Material::fill_circle(void){
       }
   }
 }
-void Material::fill (void){
-  std::mt19937 gen(N);
-  std::mt19937 gen1(N+1);
-  std::uniform_int_distribution<> rand(1, Q);
-  for(int i=0; i<N; i++){
-    for(int j=0; j<N; j++){
-      h_old[i][j] = 1;
-    }
-  }
-  
-  for(int i=0; i<N; i++){
-    for(int j=0; j<N; j++){
-      if (i == (N-1)){
-	h_old[i][j] = h_old[0][j];
-      }
-      else if (j == (N-1)){
-	h_old[i][j] = h_old[i][0];
-      }
-      else {
-	h_old[i][j]= rand(gen1);
-	h_new[i][j]=rand(gen1);
-      }
-    }
-  }
-}
+
 
 void Material::fill_tempt(float T_min, float T_max){
   float a = r*(T_max-T_min);
@@ -953,69 +928,7 @@ void Material::Delta_E_min (int i, int j){
   Delta_E [i][j] = EB-Delta_ET;
   h_old[i][j] = value_aux;
   }
-  /*
 
- long int EB_0 = 0;
- long int EB_f = 0;
- int EB = 0;
- int E_aux = 0;
- int value_aux = h_old[i][j];
- int count = 0;
- int rand_part = 0;
- int Delta_E_B[25];
- float Delta_ET = 0.0;
- 
- 
- std::mt19937 gen(time(NULL));
- std::uniform_real_distribution<> dis(0, 1);
- 
- Delta_ET = -R*tempt [i][j]*log (dis(gen));
- EB_0 = Boundary_energy ();
- for (int u = 0; u < 25 ; u++){
-   if(u==12){
-     neighborhood [12] = value_aux;
-     h_old [i][j] = value_aux;
-   }
-   else{
-     neighborhood [12] = neighborhood [u];
-     h_old [i][j] = neighborhood [u];
-   }
-   EB_f = Boundary_energy ();
-   EB = EB_f-EB_0;
-   if (EB<E_aux){
-     E_aux=EB;
-     h_new[i][j] = h_old[i][j];
-   }
-   Delta_E_B [u] = EB;
- }
- for(int u = 0; u<25; u++){
-   if(Delta_E_B[u] == E_aux){
-     count++;
-   }
- }
- if (count > 1){
-   float part = 100.0/count;
-   float rand_num = dis(gen) *100.0;
-   rand_part = round(rand_num/part);
-   
-   if (rand_part==0){
-     rand_part++;
-   }
-   count = 0;
-   for(int u = 0; u<25; u++){
-     if(Delta_E_B[u] == E_aux){
-       count++;
-       if(count == rand_part){	 
-	 h_new [i][j] = neighborhood [u];
-	 break;
-       }
-     }  
-   }
- }
- Delta_E [i][j] = EB-Delta_ET;
- h_old[i][j] = value_aux;
-}
-  */
 void Material::evolve (void){
   float D_Emin = 0.0;
   float M_max = exp ((-E_A)/tempt [N/2][N/2]);
@@ -1077,7 +990,7 @@ void Material::evolve (void){
 }
 
 void Material::size_count (void){
-  for(int u =0; u<(N*N); u++){
+  for(int u =0; u<(N*N+1000); u++){
     areas[u] = 0;
   }
   
@@ -1087,15 +1000,50 @@ void Material::size_count (void){
     }
   }
 }
-int Material::mean_area (void){
-  std::vector <int> areas_calc(areas,areas+(N*N));
+
+void Material::metrics(float &mean_area, float &mean_size, bool dist){
+  
+  float max_freq=0;;
+  int size = N*N+1000;
+  std::vector <int> areas_calc(areas,areas+(size));
+  
   sort(areas_calc.begin(),areas_calc.end());
   areas_calc.erase(std::remove(areas_calc.begin(),areas_calc.end(), 0),areas_calc.end());
   areas_calc.shrink_to_fit();
-  return (std::reduce(areas_calc.begin(),areas_calc.end())/areas_calc.size());
+  mean_area = std::accumulate(areas_calc.begin(),areas_calc.end(),0)/areas_calc.size()*1.0;
+  
+  std::map<int, float> counts;
+  for (auto v : areas_calc)
+    ++counts[v];
+  
+  
+  for (auto v : areas_calc){
+    if(max_freq<counts[v]){
+      max_freq = counts[v];
+    }
+  }
+  std::vector<float> radius(counts.size());
+  std::vector<float> frecuency(counts.size());
+  int u = 0;
+  for (auto const &p : counts ){
+    radius [u] = sqrt(p.first);
+    frecuency[u] = p.second/max_freq;
+    u++;
+  }
+  mean_size = std::accumulate(radius.begin(),radius.end(),0)/radius.size()*1.0;
+
+  
+  for (int v = 0; v<u; v++){
+    radius[v] = radius[v]/mean_size;
+  }
+  if(dist == true){
+    std::ofstream MiArchivo("distribucion_2.dat");
+    for( int v= 0; v<u; v++){
+      MiArchivo<<radius[v]<<'\t'<<frecuency[v]<<std::endl;
+    }
+     MiArchivo.close();
+  }
 }
-
-
 int Material::neighbor_get (int ii){
   return neighborhood[ii];
 }
@@ -1124,14 +1072,19 @@ void Material::print_gradient(const char * Arreglo)
 
 /*------------------Main-------------------*/
 int main (void){
+  float mean_area = 0;
+  float mean_size = 0;
+
+  std::ofstream MiArchivo("size_evolv2.dat");
+  
    Material1 initial_sys;
   initial_sys.fill();
-  initial_sys.print_array("Inicial1.dat");
-  for(int t =0 ; t<10; t++){
+  // initial_sys.print_array("Inicial1.dat");
+  for(int t =0 ; t<105; t++){
     initial_sys.evolution(t);
     initial_sys.array_change();
   }
-  initial_sys.print_array("Inicial2.dat");
+  // initial_sys.print_array("Inicial2.dat");
   Material granos;
   for (int i = 0; i<N ; i++){
     for (int j = 0; j<N; j++){
@@ -1139,20 +1092,31 @@ int main (void){
     }
   }
   
-  granos.fill_tempt(250.0,250.0);
-  //granos.fill_circle();
-  /* granos.neighbor_def (N/2, N/2);
-     granos.Delta_E_min(N/2,N/2);*/
+  granos.fill_tempt(1000.0,1000.0);
   granos.size_count();
-  int a_0 = granos.mean_area();
-  std::cout<<0<<'\t'<<a_0<<std::endl;
-  granos.print_array("Arreglo1_o.dat");
-  for (int t = 1; t <1; t++){
+  granos.metrics(mean_area, mean_size, false);
+  std::cout<<0<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
+  MiArchivo<<0<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
+  granos.print_array("C2_A1.dat");
+  for (int t = 1; t <=560; t++){
     granos.evolve();
-    granos.size_count();
-    std::cout<<t<<'\t'<<granos.mean_area()<<std::endl;
+
+    if(t%10==0){
+      granos.size_count();
+      granos.metrics(mean_area, mean_size, false);
+      std::cout<<t<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
+      MiArchivo<<t<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
+      if(t == 100){
+	granos.print_array("C2_A2.dat");
+      }
+      else if (t == 200){
+	granos.metrics(mean_area, mean_size, true);
+	granos.print_array("C2_A3.dat");
+      }
+    }
   }
-  granos.print_array("Arreglo2_o.dat");
+  granos.print_array("C2_A4.dat");
+  
   return 0;
   
 }
