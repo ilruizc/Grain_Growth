@@ -12,8 +12,8 @@
 const short int N = 200; //Tamaño del arreglo
 const short int T = 200; // Tiempo máximo
 const short int r = 40; //Radio en celdas de la región caliente
-const float E_A = 1.25*pow(10,5); // Energía de activación, como multiplo de la constante de Boltzmann
-const float R = 8.31446261; // Constante del Gas ideal
+const double E_A = pow(10,6); // Energía de activación, como multiplo de la constante de Boltzmann
+const double R = 8.31446261; // Constante del Gas ideal
 
 /*------------------Clase Paper1-------------------*/
 
@@ -279,15 +279,15 @@ class Material
 private:
   short int h_old[N][N];
   short int h_new[N][N];
-  float Delta_E[N][N];
+  double Delta_E[N][N];
   short int neighborhood [25]; //Numero de segundos vecinos de Moore
   int areas [N*N];
-  float tempt [N][N];
+  double tempt [N][N];
   bool frontier [N][N];
 public:
-  void fill_tempt (float T_min, float T_max);
+  void fill_tempt (double T_min, double T_max);
   void fill_circle(void);
-  float probability (int i, int j, float M_max, float D_Emin);
+  double probability (int i, int j, double M_max, double D_Emin);
   void neighbor_def (int i, int j);
   int neighbor_get (int ii);
   bool is_boundary (int i, int j);
@@ -298,7 +298,7 @@ public:
   void size_count (void);
   void print_array(const char * Arreglo);
   void print_gradient(const char * Arreglo);
-  void metrics(float &mean_area, float &mean_size, bool dist);
+  void metrics(double &mean_area, double &mean_size, bool dist);
   int mean_area (void);
 };
 
@@ -319,10 +319,10 @@ void Material::fill_circle(void){
 }
 
 
-void Material::fill_tempt(float T_min, float T_max){
-  float a = r*(T_max-T_min);
-  float b = T_min;
-  float x = 0.0;
+void Material::fill_tempt(double T_min, double T_max){
+  double a = r*(T_max-T_min);
+  double b = T_min;
+  double x = 0.0;
   for(int i=0; i<N; i++){
     for(int j=0; j<N; j++){
       tempt [i][j] = 500;
@@ -342,8 +342,8 @@ void Material::fill_tempt(float T_min, float T_max){
   }
 }
 
-float Material::probability (int i, int j, float M_max, float D_Emin){
-  float M_ij = exp ((-E_A)/tempt [i][j]);
+double Material::probability (int i, int j, double M_max, double D_Emin){
+  double M_ij = exp ((-E_A)/tempt [i][j]);
   if (Delta_E[i][j] < 0){
   return ((M_ij/M_max)*(Delta_E[i][j]/D_Emin));
   }
@@ -852,7 +852,7 @@ void Material::Delta_E_min(int i, int j,int t){
   int value_aux = h_old[i][j];
   int count = 0;
   int rand_part = 0;
-  float Delta_ET = 0.0;
+  double Delta_ET = 0.0;
   std::vector <int> S(neighborhood,neighborhood+25);
   
 
@@ -906,8 +906,8 @@ void Material::Delta_E_min(int i, int j,int t){
       }
   }
   if (count > 1){
-    float part = 100.0/count;
-    float rand_num = dis(gen) *100.0;
+    double part = 100.0/count;
+    double rand_num = dis(gen) *100.0;
     rand_part = round(rand_num/part);
     
     if (rand_part==0){
@@ -930,8 +930,8 @@ void Material::Delta_E_min(int i, int j,int t){
   }
 
 void Material::evolve (int t){
-  float D_Emin = 0.0;
-  float M_max = exp ((-E_A)/tempt [N/2][N/2]);
+  double D_Emin = 0.0;
+  double M_max = exp ((-E_A)/tempt [N/2][N/2]);
 
   std::mt19937 gen(t);
   
@@ -1001,18 +1001,19 @@ void Material::size_count (void){
   }
 }
 
-void Material::metrics(float &mean_area, float &mean_size, bool dist){
+void Material::metrics(double &mean_area, double &mean_size, bool dist){
   
-  float max_freq=0;;
+  double max_freq=0;;
   int size = N*N+1000;
   std::vector <int> areas_calc(areas,areas+(size));
   
   sort(areas_calc.begin(),areas_calc.end());
   areas_calc.erase(std::remove(areas_calc.begin(),areas_calc.end(), 0),areas_calc.end());
   areas_calc.shrink_to_fit();
-  mean_area = std::accumulate(areas_calc.begin(),areas_calc.end(),0)/areas_calc.size()*1.0;
+  mean_area = 1.0* std::accumulate(areas_calc.begin(),areas_calc.end(),0);
+  mean_area = 1.0*mean_area/areas_calc.size();
   
-  std::map<int, float> counts;
+  std::map<int, double> counts;
   for (auto v : areas_calc)
     ++counts[v];
   
@@ -1022,16 +1023,16 @@ void Material::metrics(float &mean_area, float &mean_size, bool dist){
       max_freq = counts[v];
     }
   }
-  std::vector<float> radius(counts.size());
-  std::vector<float> frecuency(counts.size());
+  std::vector<double> radius(counts.size());
+  std::vector<double> frecuency(counts.size());
   int u = 0;
   for (auto const &p : counts ){
     radius [u] = sqrt(p.first);
     frecuency[u] = p.second/max_freq;
     u++;
   }
-  mean_size = std::accumulate(radius.begin(),radius.end(),0)/radius.size()*1.0;
-
+  mean_size = 1.0* std::accumulate(radius.begin(),radius.end(),0);
+  mean_size = mean_size/radius.size()*1.0;
   
   for (int v = 0; v<u; v++){
     radius[v] = radius[v]/mean_size;
@@ -1072,15 +1073,15 @@ void Material::print_gradient(const char * Arreglo)
 
 /*------------------Main-------------------*/
 int main (void){
-  float mean_area = 0;
-  float mean_size = 0;
+  double mean_area = 0;
+  double mean_size = 0;
 
   std::ofstream MiArchivo("size_evolv2.dat");
   
    Material1 initial_sys;
   initial_sys.fill();
   // initial_sys.print_array("Inicial1.dat");
-  for(int t =0 ; t<105; t++){
+  for(int t =0 ; t<103; t++){
     initial_sys.evolution(t);
     initial_sys.array_change();
   }
@@ -1092,13 +1093,13 @@ int main (void){
     }
   }
   
-  granos.fill_tempt(1000.0,1000.0);
+  granos.fill_tempt(1400.0,1400.0);
   granos.size_count();
   granos.metrics(mean_area, mean_size, false);
   std::cout<<0<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
   MiArchivo<<0<<'\t'<<mean_area<<'\t'<<mean_size<<std::endl;
   granos.print_array("C2_A1.dat");
-  for (int t = 1; t <=30; t++){
+  for (int t = 1; t <=40; t++){
     granos.evolve(t);
 
     if(t%10==0){
